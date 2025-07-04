@@ -1,6 +1,5 @@
 import vaccineLotData from "@/services/mockData/vaccineLots.json";
 import { vaccineService } from "@/services/api/vaccineService";
-
 class VaccineLotService {
   constructor() {
     this.vaccineLots = [...vaccineLotData];
@@ -131,26 +130,51 @@ async validateDataIntegrity() {
       return dtapVaccine.Id;
     }
     
-    // Last resort: assign the first available vaccine
+// Last resort: assign the first available vaccine
     if (vaccines.length > 0) {
       console.warn(`Using first available vaccine (${vaccines[0].name}) as final fallback for lot ${lot.lotNumber}`);
       return vaccines[0].Id;
     }
     
-    console.error(`No suitable vaccine found for lot ${lot.lotNumber} - no vaccines available`);
     return null;
   }
 
+  async getAvailableLots() {
+    try {
+      // Ensure data integrity before returning available lots
+      if (!this.dataIntegrityChecked) {
+        await this.validateDataIntegrity();
+      }
+      
+      const allLots = await this.getAll();
+      const today = new Date();
+      
+      return allLots.filter(lot => {
+        // Additional safety check for null/undefined vaccine IDs
+        if (lot.vaccineId === null || lot.vaccineId === undefined) {
+          console.warn(`Filtering out lot ${lot.Id} with null/undefined vaccine ID`);
+          return false;
+        }
+        
+        const expirationDate = new Date(lot.expirationDate);
+return lot.availableQuantity > 0 && expirationDate > today;
+      });
+    } catch (error) {
+      console.error('Error getting available lots:', error);
+      throw new Error('Failed to get available lots');
+    }
+  }
+
   async getAll() {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 200));
     
-    // Ensure data integrity before returning data
-    await this.validateDataIntegrity();
+    // Ensure data integrity
+    if (!this.dataIntegrityChecked) {
+      await this.validateDataIntegrity();
+    }
     
     return [...this.vaccineLots];
   }
-
   async getById(id) {
     await new Promise(resolve => setTimeout(resolve, 200));
     
@@ -300,7 +324,7 @@ async getByVaccineId(vaccineId) {
     return this.vaccineLots.filter(lot => lot.quantityOnHand <= threshold);
   }
 
-  async getAvailableLots() {
+async getAvailableQuantity() {
     await new Promise(resolve => setTimeout(resolve, 250));
     
     // Ensure data integrity
