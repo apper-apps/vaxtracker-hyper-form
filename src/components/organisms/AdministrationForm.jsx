@@ -38,33 +38,64 @@ const loadData = async () => {
       setVaccinesLoading(true);
       setError(null);
       
-      // Load vaccines first to ensure they're available for vaccine lot processing
+      console.log('Starting data load sequence for administration form...');
+      
+      // Load vaccines first and ensure they're completely loaded
       const vaccinesData = await vaccineService.getAll();
-      console.log('Loaded vaccines:', vaccinesData.length, 'vaccines');
+      console.log('Loaded vaccines:', vaccinesData.length, 'vaccines with IDs:', vaccinesData.map(v => v.Id));
+      
+      // Validate vaccine data completeness
+      const validVaccines = vaccinesData.filter(v => v.Id && v.name && v.abbreviation);
+      if (validVaccines.length < vaccinesData.length) {
+        console.warn(`${vaccinesData.length - validVaccines.length} vaccines have incomplete data`);
+      }
+      
       setVaccines(vaccinesData);
       setVaccinesLoading(false);
       
-      // Wait a moment to ensure vaccines state is updated
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Wait longer to ensure vaccines state is fully updated before processing lots
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Then load vaccine lots with data integrity validation
-      const lotsData = await vaccineLotService.getAll();
-      console.log('Loaded vaccine lots:', lotsData.length, 'lots');
-      
-      // Check if any data integrity repairs were made
+      // Perform comprehensive data integrity validation before loading lots
+      console.log('Performing comprehensive vaccine lot data integrity validation...');
       const integrityResult = await vaccineLotService.validateDataIntegrity();
       if (integrityResult.repaired > 0) {
         toast.success(`Data integrity verified: ${integrityResult.repaired} vaccine lot(s) corrected for administration`);
         console.log('Administration form - vaccine lot data integrity repairs:', integrityResult);
       }
+      if (integrityResult.issues.length > 0) {
+        console.warn('Data integrity issues detected:', integrityResult.issues);
+      }
       
-      // Only show lots with available inventory
-      const availableLots = lotsData.filter(lot => lot.quantityOnHand > 0);
-      console.log('Available lots for administration:', availableLots.length);
+      // Load vaccine lots after integrity validation
+      const lotsData = await vaccineLotService.getAll();
+      console.log('Loaded vaccine lots:', lotsData.length, 'total lots');
+      
+      // Validate that all lots have valid vaccine references
+      const lotsWithValidVaccines = lotsData.filter(lot => {
+        if (!lot.vaccineId) {
+          console.error(`Lot ${lot.Id} (${lot.lotNumber}) has no vaccine ID`);
+          return false;
+        }
+        const vaccine = vaccinesData.find(v => v.Id === lot.vaccineId);
+        if (!vaccine) {
+          console.error(`Lot ${lot.Id} (${lot.lotNumber}) references non-existent vaccine ID: ${lot.vaccineId}`);
+          return false;
+        }
+        return true;
+      });
+      
+      if (lotsWithValidVaccines.length < lotsData.length) {
+        console.warn(`${lotsData.length - lotsWithValidVaccines.length} lots have invalid vaccine references`);
+      }
+      
+      // Only show lots with available inventory and valid vaccine references
+      const availableLots = lotsWithValidVaccines.filter(lot => lot.quantityOnHand > 0);
+      console.log('Available lots for administration:', availableLots.length, 'with valid vaccine references');
       setVaccineLots(availableLots);
     } catch (error) {
       console.error('Error loading data:', error);
-      setError('Failed to load inventory data. Please check data integrity.');
+      setError('Failed to load inventory data. Please check data integrity and try again.');
       setVaccinesLoading(false);
     } finally {
       setLoading(false);
@@ -82,16 +113,21 @@ const loadData = async () => {
 
   // Memoized vaccine name lookup function
 const getVaccineName = useCallback((vaccineId) => {
-    // Enhanced loading state checks
-    if (vaccinesLoading || loading) return 'Loading...';
-    if (!vaccines.length) {
+    // Enhanced loading state checks with better specificity
+    if (vaccinesLoading || loading) {
+      console.log('getVaccineName: Still loading vaccines or data');
+      return 'Loading...';
+    }
+    
+    if (!vaccines || vaccines.length === 0) {
       console.warn('getVaccineName called but no vaccines loaded yet');
       return 'Loading vaccines...';
     }
     
     if (vaccineId === null || vaccineId === undefined) {
-      console.warn('getVaccineName called with null/undefined vaccine ID');
-      return 'No Vaccine ID';
+      console.error('getVaccineName called with null/undefined vaccine ID - this indicates a data integrity issue');
+      console.error('Current lot data may have missing vaccine references');
+      return 'Missing Vaccine Reference';
     }
     
     // Handle both string and integer vaccine IDs with comprehensive validation
@@ -101,31 +137,50 @@ const getVaccineName = useCallback((vaccineId) => {
     if (isNaN(parsedId) || parsedId <= 0) {
       console.error(`Invalid vaccine ID format in administration: ${vaccineId} (type: ${typeof vaccineId})`);
       console.error('Available vaccine IDs:', vaccines.map(v => v.Id));
+      console.error('This indicates corrupted lot data that needs repair');
       return 'Invalid Vaccine ID';
     }
     
-    const vaccine = vaccineMap.get(parsedId);
+    // Use direct array search as fallback if vaccineMap fails
+    let vaccine = vaccineMap.get(parsedId);
     if (!vaccine) {
-      console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form.`);
+      console.warn(`Vaccine not found in map for ID ${parsedId}, trying direct search...`);
+      vaccine = vaccines.find(v => v.Id === parsedId);
+    }
+    
+    if (!vaccine) {
+      console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form`);
       console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, name: v.name })));
       console.error('VaccineMap size:', vaccineMap.size);
-      console.error('This may indicate a data integrity issue between vaccine lots and vaccine master data');
+      console.error('This indicates a data integrity issue between vaccine lots and vaccine master data');
+      // Attempt to trigger data repair
+      vaccineLotService.repairDataIntegrity().then(result => {
+        if (result.repaired > 0) {
+          console.log('Data repair completed, reloading data...');
+          loadData();
+        }
+      });
       return `Vaccine ID ${parsedId} Not Found`;
     }
+    
     return vaccine.name || 'Unnamed Vaccine';
-  }, [vaccines, vaccineMap, vaccinesLoading, loading]);
+  }, [vaccines, vaccineMap, vaccinesLoading, loading, loadData]);
 
 // Memoized vaccine abbreviation lookup function
 const getVaccineAbbreviation = useCallback((vaccineId) => {
-    // Enhanced loading state checks
-    if (vaccinesLoading || loading) return 'Loading...';
-    if (!vaccines.length) {
+    // Enhanced loading state checks with better specificity
+    if (vaccinesLoading || loading) {
+      console.log('getVaccineAbbreviation: Still loading vaccines or data');
+      return 'Loading...';
+    }
+    
+    if (!vaccines || vaccines.length === 0) {
       console.warn('getVaccineAbbreviation called but no vaccines loaded yet');
       return 'Loading...';
     }
     
     if (vaccineId === null || vaccineId === undefined) {
-      console.warn('getVaccineAbbreviation called with null/undefined vaccine ID');
+      console.error('getVaccineAbbreviation called with null/undefined vaccine ID - data integrity issue');
       return 'N/A';
     }
     
@@ -136,19 +191,34 @@ const getVaccineAbbreviation = useCallback((vaccineId) => {
     if (isNaN(parsedId) || parsedId <= 0) {
       console.error(`Invalid vaccine ID format in administration: ${vaccineId} (type: ${typeof vaccineId})`);
       console.error('Available vaccine IDs:', vaccines.map(v => v.Id));
+      console.error('This indicates corrupted lot data that needs repair');
       return 'N/A';
     }
     
-    const vaccine = vaccineMap.get(parsedId);
+    // Use direct array search as fallback if vaccineMap fails
+    let vaccine = vaccineMap.get(parsedId);
+    if (!vaccine) {
+      console.warn(`Vaccine not found in map for ID ${parsedId}, trying direct search...`);
+      vaccine = vaccines.find(v => v.Id === parsedId);
+    }
+    
     if (!vaccine) {
       console.error(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form`);
       console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, abbreviation: v.abbreviation })));
       console.error('VaccineMap size:', vaccineMap.size);
-      console.error('This may indicate a data integrity issue between vaccine lots and vaccine master data');
+      console.error('This indicates a data integrity issue between vaccine lots and vaccine master data');
+      // Attempt to trigger data repair
+      vaccineLotService.repairDataIntegrity().then(result => {
+        if (result.repaired > 0) {
+          console.log('Data repair completed, reloading data...');
+          loadData();
+        }
+      });
       return 'N/A';
     }
+    
     return vaccine.abbreviation || 'N/A';
-  }, [vaccines, vaccineMap, vaccinesLoading, loading]);
+  }, [vaccines, vaccineMap, vaccinesLoading, loading, loadData]);
 
   const getExpirationStatus = (lot) => {
     const today = new Date();

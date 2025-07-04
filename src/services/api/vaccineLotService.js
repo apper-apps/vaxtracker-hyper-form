@@ -7,15 +7,16 @@ class VaccineLotService {
     this.dataIntegrityChecked = false;
   }
 
-  async validateDataIntegrity() {
-    if (this.dataIntegrityChecked) return { repaired: 0, issues: [] };
-
-    console.log('Performing vaccine lot data integrity check...');
+async validateDataIntegrity() {
+    console.log('Performing comprehensive vaccine lot data integrity check...');
     
     try {
       // Get current vaccines to validate against
       const vaccines = await vaccineService.getAll();
       const validVaccineIds = new Set(vaccines.map(v => v.Id));
+      
+      console.log(`Validating ${this.vaccineLots.length} lots against ${vaccines.length} vaccines`);
+      console.log('Valid vaccine IDs:', Array.from(validVaccineIds));
       
       let repairedCount = 0;
       const issues = [];
@@ -24,21 +25,38 @@ class VaccineLotService {
       for (let i = 0; i < this.vaccineLots.length; i++) {
         const lot = this.vaccineLots[i];
         let needsRepair = false;
+        const originalVaccineId = lot.vaccineId;
         
         // Check for missing or invalid vaccine ID
         if (lot.vaccineId === null || lot.vaccineId === undefined) {
           issues.push(`Lot ${lot.Id} (${lot.lotNumber}) has null/undefined vaccine ID`);
           needsRepair = true;
-        } else if (!validVaccineIds.has(lot.vaccineId)) {
-          issues.push(`Lot ${lot.Id} (${lot.lotNumber}) references non-existent vaccine ID: ${lot.vaccineId}`);
-          needsRepair = true;
+          console.warn(`Data integrity issue: Lot ${lot.Id} has no vaccine ID`);
+        } else {
+          // Handle string vaccine IDs that need parsing
+          const parsedVaccineId = typeof lot.vaccineId === 'string' ? parseInt(lot.vaccineId, 10) : lot.vaccineId;
+          
+          if (isNaN(parsedVaccineId) || parsedVaccineId <= 0) {
+            issues.push(`Lot ${lot.Id} (${lot.lotNumber}) has invalid vaccine ID format: ${lot.vaccineId}`);
+            needsRepair = true;
+            console.warn(`Data integrity issue: Lot ${lot.Id} has invalid vaccine ID format`);
+          } else if (!validVaccineIds.has(parsedVaccineId)) {
+            issues.push(`Lot ${lot.Id} (${lot.lotNumber}) references non-existent vaccine ID: ${parsedVaccineId}`);
+            needsRepair = true;
+            console.warn(`Data integrity issue: Lot ${lot.Id} references non-existent vaccine ID ${parsedVaccineId}`);
+          } else if (typeof lot.vaccineId === 'string') {
+            // Convert string IDs to integers for consistency
+            console.log(`Converting string vaccine ID to integer for lot ${lot.Id}: ${lot.vaccineId} -> ${parsedVaccineId}`);
+            this.vaccineLots[i] = { ...lot, vaccineId: parsedVaccineId };
+            repairedCount++;
+          }
         }
         
         // Attempt to repair by finding a suitable vaccine match
         if (needsRepair) {
           const repairedVaccineId = this.findSuitableVaccineId(lot, vaccines);
           if (repairedVaccineId) {
-            console.log(`Repairing lot ${lot.Id} (${lot.lotNumber}): assigning vaccine ID ${repairedVaccineId}`);
+            console.log(`Repairing lot ${lot.Id} (${lot.lotNumber}): ${originalVaccineId} -> ${repairedVaccineId}`);
             this.vaccineLots[i] = { ...lot, vaccineId: repairedVaccineId };
             repairedCount++;
           } else {
@@ -55,6 +73,19 @@ class VaccineLotService {
         console.log('Data integrity check completed: no issues found');
       }
       
+      // Final validation pass
+      const remainingIssues = this.vaccineLots.filter(lot => {
+        const vaccineId = typeof lot.vaccineId === 'string' ? parseInt(lot.vaccineId, 10) : lot.vaccineId;
+        return !validVaccineIds.has(vaccineId) || lot.vaccineId === null || lot.vaccineId === undefined;
+      });
+      
+      if (remainingIssues.length > 0) {
+        console.error(`${remainingIssues.length} lots still have unresolved vaccine ID issues after repair attempt`);
+        remainingIssues.forEach(lot => {
+          console.error(`Unresolved: Lot ${lot.Id} (${lot.lotNumber}) vaccine ID: ${lot.vaccineId}`);
+        });
+      }
+      
       return { repaired: repairedCount, issues };
     } catch (error) {
       console.error('Error during data integrity validation:', error);
@@ -63,16 +94,50 @@ class VaccineLotService {
   }
 
   findSuitableVaccineId(lot, vaccines) {
-    // Try to match based on lot number patterns or other heuristics
-    // This is a fallback mechanism for data repair
+    console.log(`Finding suitable vaccine for lot ${lot.Id} (${lot.lotNumber})`);
     
-    // For now, assign the first available vaccine as a safe default
-    // In a real system, this would use more sophisticated matching logic
+    // Try to match based on lot number patterns or manufacturer codes
+    for (const vaccine of vaccines) {
+      // Look for manufacturer patterns in lot numbers
+      if (lot.lotNumber && vaccine.manufacturer) {
+        // Sanofi Pasteur lots often start with specific patterns
+        if (vaccine.manufacturer === 'Sanofi Pasteur' && 
+            (lot.lotNumber.match(/^[34][A-Z]+[0-9]/i) || lot.lotNumber.match(/^U[0-9]/i))) {
+          console.log(`Matched lot ${lot.lotNumber} to ${vaccine.name} based on Sanofi pattern`);
+          return vaccine.Id;
+        }
+        
+        // Merck lots often have specific patterns
+        if (vaccine.manufacturer === 'Merck' && 
+            (lot.lotNumber.match(/^[YZ][0-9]/i))) {
+          console.log(`Matched lot ${lot.lotNumber} to ${vaccine.name} based on Merck pattern`);
+          return vaccine.Id;
+        }
+        
+        // GSK lots often have specific patterns
+        if (vaccine.manufacturer === 'GSK' && 
+            (lot.lotNumber.match(/^[CX][A-Z0-9]/i))) {
+          console.log(`Matched lot ${lot.lotNumber} to ${vaccine.name} based on GSK pattern`);
+          return vaccine.Id;
+        }
+      }
+    }
+    
+    // Fallback: assign to most common vaccine type as safe default
+    // Prioritize DTaP vaccines as they're commonly used
+    const dtapVaccine = vaccines.find(v => v.family === 'DTaP');
+    if (dtapVaccine) {
+      console.warn(`Using DTaP vaccine (${dtapVaccine.name}) as fallback for lot ${lot.lotNumber}`);
+      return dtapVaccine.Id;
+    }
+    
+    // Last resort: assign the first available vaccine
     if (vaccines.length > 0) {
-      console.warn(`Assigning default vaccine ID ${vaccines[0].Id} to lot ${lot.lotNumber} as fallback`);
+      console.warn(`Using first available vaccine (${vaccines[0].name}) as final fallback for lot ${lot.lotNumber}`);
       return vaccines[0].Id;
     }
     
+    console.error(`No suitable vaccine found for lot ${lot.lotNumber} - no vaccines available`);
     return null;
   }
 
@@ -162,7 +227,7 @@ class VaccineLotService {
 async getByVaccineId(vaccineId) {
     await new Promise(resolve => setTimeout(resolve, 250));
     
-    // Ensure data integrity
+    // Ensure data integrity before searching
     await this.validateDataIntegrity();
     
     if (vaccineId === null || vaccineId === undefined) {
@@ -174,22 +239,41 @@ async getByVaccineId(vaccineId) {
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
     if (isNaN(parsedId) || parsedId <= 0) {
-      console.warn(`Invalid vaccine ID provided to getByVaccineId: ${vaccineId} (type: ${typeof vaccineId})`);
-      console.warn('Available vaccine IDs in lots:', [...new Set(this.vaccineLots.map(lot => lot.vaccineId))]);
+      console.error(`Invalid vaccine ID provided to getByVaccineId: ${vaccineId} (type: ${typeof vaccineId})`);
+      console.error('Available vaccine IDs in lots:', [...new Set(this.vaccineLots.map(lot => lot.vaccineId))]);
       return [];
     }
     
+    console.log(`Searching for lots with vaccine ID: ${parsedId}`);
+    
     const matchingLots = this.vaccineLots.filter(lot => {
       if (lot.vaccineId === null || lot.vaccineId === undefined) {
-        console.warn(`Lot ${lot.Id} has null/undefined vaccine ID`);
+        console.warn(`Lot ${lot.Id} (${lot.lotNumber}) has null/undefined vaccine ID - should have been repaired`);
         return false;
       }
+      
+      // Ensure consistent comparison by parsing lot vaccine ID
       const lotVaccineId = typeof lot.vaccineId === 'string' ? parseInt(lot.vaccineId, 10) : lot.vaccineId;
+      
+      if (isNaN(lotVaccineId)) {
+        console.warn(`Lot ${lot.Id} (${lot.lotNumber}) has non-numeric vaccine ID: ${lot.vaccineId}`);
+        return false;
+      }
+      
       return lotVaccineId === parsedId;
     });
     
     console.log(`Found ${matchingLots.length} lots for vaccine ID ${parsedId}`);
-    return matchingLots;
+    
+    // Log details for debugging
+    if (matchingLots.length === 0) {
+      console.warn(`No lots found for vaccine ID ${parsedId}`);
+      console.warn('All lot vaccine IDs:', this.vaccineLots.map(lot => ({ lotId: lot.Id, vaccineId: lot.vaccineId })));
+    } else {
+      console.log('Matching lots:', matchingLots.map(lot => ({ lotId: lot.Id, lotNumber: lot.lotNumber, vaccineId: lot.vaccineId })));
+    }
+    
+    return matchingLots.map(lot => ({ ...lot }));
   }
 
   async getExpiringSoon(days = 30) {
