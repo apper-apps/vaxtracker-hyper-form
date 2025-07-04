@@ -87,14 +87,14 @@ const AdministrationForm = ({ onSuccess }) => {
     }
   };
 
-  const handleDoseChange = (lotId, value) => {
+const handleDoseChange = (lotId, value) => {
     setAdministeredDoses(prev => ({
       ...prev,
       [lotId]: value
     }));
 
     // Validate input
-    const lot = vaccineLots.find(l => l.Id === lotId);
+    const lot = vaccineLots.find(l => l?.Id === lotId);
     if (lot) {
       const error = validateAdministeredDoses(value, lot.quantityOnHand, lot.lotNumber);
       setErrors(prev => ({
@@ -172,8 +172,8 @@ const AdministrationForm = ({ onSuccess }) => {
       sortable: true,
 sortFn: (a, b) => {
         if (!a || !b) return 0;
-        const aName = getVaccineName(a.vaccineId) || '';
-        const bName = getVaccineName(b.vaccineId) || '';
+        const aName = getVaccineName(a?.vaccineId) || '';
+        const bName = getVaccineName(b?.vaccineId) || '';
         return aName.localeCompare(bName);
       },
       render: (lot) => (
@@ -187,7 +187,7 @@ sortFn: (a, b) => {
     {
       key: 'genericName',
       label: 'Generic Name',
-      render: (lot) => (
+render: (lot) => (
         <span className="text-gray-600">
           {lot ? getVaccineAbbreviation(lot?.vaccineId) || 'N/A' : 'N/A'}
         </span>
@@ -196,8 +196,8 @@ sortFn: (a, b) => {
       sortKey: 'vaccineId',
       sortFn: (a, b) => {
         if (!a || !b) return 0;
-        const aAbbr = getVaccineAbbreviation(a.vaccineId) || '';
-        const bAbbr = getVaccineAbbreviation(b.vaccineId) || '';
+        const aAbbr = getVaccineAbbreviation(a?.vaccineId) || '';
+        const bAbbr = getVaccineAbbreviation(b?.vaccineId) || '';
         return aAbbr.localeCompare(bAbbr);
       }
     },
@@ -205,9 +205,9 @@ sortFn: (a, b) => {
       key: 'lotNumber',
       label: 'Lot Number',
       sortable: true,
-      render: (lot) => (
+render: (lot) => (
         <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-          {lot.lotNumber}
+          {lot?.lotNumber || 'N/A'}
         </span>
       )
     },
@@ -215,24 +215,30 @@ sortFn: (a, b) => {
       key: 'expirationDate',
       label: 'Expiration Date',
       sortable: true,
-      render: (lot) => (
-        <div className="space-y-1">
-          <div className="text-sm text-gray-900">
-            {new Date(lot.expirationDate).toLocaleDateString()}
+render: (lot) => {
+        if (!lot) return <span className="text-gray-500">N/A</span>;
+        return (
+          <div className="space-y-1">
+            <div className="text-sm text-gray-900">
+              {lot.expirationDate ? new Date(lot.expirationDate).toLocaleDateString() : 'N/A'}
+            </div>
+            {getStatusBadge(lot)}
           </div>
-          {getStatusBadge(lot)}
-        </div>
-      ),
-      sortFn: (a, b) => new Date(a.expirationDate) - new Date(b.expirationDate)
+        );
+      },
+      sortFn: (a, b) => {
+        if (!a || !b) return 0;
+        return new Date(a.expirationDate || 0) - new Date(b.expirationDate || 0);
+      }
     },
     {
       key: 'quantityOnHand',
       label: 'Quantity On Hand',
       sortable: true,
-      render: (lot) => (
+render: (lot) => (
         <div className="text-center">
           <span className="text-lg font-semibold text-gray-900">
-            {lot.quantityOnHand}
+            {lot?.quantityOnHand ?? 0}
           </span>
           <div className="text-xs text-gray-500">doses</div>
         </div>
@@ -241,35 +247,38 @@ sortFn: (a, b) => {
     {
       key: 'adminDoses',
       label: 'Administered Doses',
-      render: (lot) => (
-        <div className="flex items-center space-x-2 min-w-[200px]">
-          <div className="flex-1">
-            <Input
-              type="number"
-              value={administeredDoses[lot.Id] || ''}
-              onChange={(e) => handleDoseChange(lot.Id, e.target.value)}
-              placeholder="0"
-              min="1"
-              max={lot.quantityOnHand}
-              className={errors[lot.Id] ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}
-            />
-            {errors[lot.Id] && (
-              <div className="text-xs text-red-600 mt-1">
-                {errors[lot.Id]}
-              </div>
-            )}
+render: (lot) => {
+        if (!lot) return <span className="text-gray-500">N/A</span>;
+        return (
+          <div className="flex items-center space-x-2 min-w-[200px]">
+            <div className="flex-1">
+              <Input
+                type="number"
+                value={administeredDoses[lot.Id] || ''}
+                onChange={(e) => handleDoseChange(lot.Id, e.target.value)}
+                placeholder="0"
+                min="1"
+                max={lot.quantityOnHand}
+                className={errors[lot.Id] ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}
+              />
+              {errors[lot.Id] && (
+                <div className="text-xs text-red-600 mt-1">
+                  {errors[lot.Id]}
+                </div>
+              )}
+            </div>
+            <Button
+              size="sm"
+              onClick={() => handleAdminister(lot)}
+              loading={submitting[lot.Id]}
+              disabled={!administeredDoses[lot.Id] || errors[lot.Id] || submitting[lot.Id]}
+              icon="Syringe"
+            >
+              Record
+            </Button>
           </div>
-          <Button
-            size="sm"
-            onClick={() => handleAdminister(lot)}
-            loading={submitting[lot.Id]}
-            disabled={!administeredDoses[lot.Id] || errors[lot.Id] || submitting[lot.Id]}
-            icon="Syringe"
-          >
-            Record
-          </Button>
-        </div>
-      )
+        );
+      }
     }
   ];
 
