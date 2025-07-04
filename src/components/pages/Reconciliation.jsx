@@ -6,7 +6,6 @@ import Input from '@/components/atoms/Input';
 import Select from '@/components/atoms/Select';
 import Button from '@/components/atoms/Button';
 import Modal from '@/components/molecules/Modal';
-import DataTable from '@/components/molecules/DataTable';
 import Loading from '@/components/ui/Loading';
 import Error from '@/components/ui/Error';
 import Empty from '@/components/ui/Empty';
@@ -52,14 +51,9 @@ const Reconciliation = () => {
     }
   };
 
-const getVaccineName = (vaccineId) => {
+  const getVaccineName = (vaccineId) => {
     const vaccine = vaccines.find(v => v.Id === vaccineId);
     return vaccine ? vaccine.name : 'Unknown';
-  };
-
-  const getVaccineGenericName = (vaccineId) => {
-    const vaccine = vaccines.find(v => v.Id === vaccineId);
-    return vaccine ? vaccine.abbreviation : 'Unknown';
   };
 
   const handleAdjustment = (lot) => {
@@ -128,77 +122,6 @@ const getVaccineName = (vaccineId) => {
     { value: 'administration-error', label: 'Administration Recording Error' },
     { value: 'transfer-error', label: 'Transfer Error' },
     { value: 'other', label: 'Other' }
-];
-
-  const columns = [
-    {
-      key: 'vaccine',
-      label: 'Vaccine',
-      sortable: true,
-      sortFn: (a, b) => {
-        const aName = getVaccineName(a.vaccineId);
-        const bName = getVaccineName(b.vaccineId);
-        return aName.localeCompare(bName);
-      },
-      render: (value, item) => (
-        <div className="font-medium text-gray-900">{getVaccineName(item.vaccineId)}</div>
-      )
-    },
-    {
-      key: 'genericName',
-      label: 'Generic Name',
-      sortable: true,
-      sortFn: (a, b) => {
-        const aAbbr = getVaccineGenericName(a.vaccineId);
-        const bAbbr = getVaccineGenericName(b.vaccineId);
-        return aAbbr.localeCompare(bAbbr);
-      },
-      render: (value, item) => (
-        <span className="font-medium text-gray-700">{getVaccineGenericName(item.vaccineId)}</span>
-      )
-    },
-    {
-      key: 'lotNumber',
-      label: 'Lot Number',
-      sortable: true,
-      render: (value, item) => (
-        <span className="font-mono text-sm">{item.lotNumber}</span>
-      )
-    },
-    {
-      key: 'expirationDate',
-      label: 'Expiration',
-      sortable: true,
-      render: (value, item) => (
-        <div className="text-sm text-gray-900">{new Date(item.expirationDate).toLocaleDateString()}</div>
-      )
-    },
-    {
-      key: 'quantityOnHand',
-      label: 'System Count',
-      sortable: true,
-      render: (value, item) => (
-        <div className="text-center">
-          <div className="text-lg font-semibold">{item.quantityOnHand}</div>
-          <div className="text-sm text-gray-500">doses</div>
-        </div>
-      )
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      sortable: false,
-      render: (value, item) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleAdjustment(item)}
-          icon="Calculator"
-        >
-          Reconcile
-        </Button>
-      )
-    }
   ];
 
   if (loading) {
@@ -279,18 +202,67 @@ const getVaccineName = (vaccineId) => {
           <h3 className="text-lg font-semibold text-gray-900">Current Inventory</h3>
         </div>
         
-{vaccineLots.length === 0 ? (
+        {vaccineLots.length === 0 ? (
           <Empty
             type="lots"
             title="No vaccine lots to reconcile"
             description="There are no vaccine lots in the system to reconcile."
           />
         ) : (
-          <DataTable
-            data={vaccineLots}
-            columns={columns}
-            sortable={true}
-          />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Vaccine
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Lot Number
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Expiration
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    System Count
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {vaccineLots.map((lot) => (
+                  <tr key={lot.Id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium text-gray-900">{getVaccineName(lot.vaccineId)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="font-mono text-sm">{lot.lotNumber}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{new Date(lot.expirationDate).toLocaleDateString()}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold">{lot.quantityOnHand}</div>
+                        <div className="text-sm text-gray-500">doses</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAdjustment(lot)}
+                        icon="Calculator"
+                      >
+                        Reconcile
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
 

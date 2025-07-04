@@ -22,18 +22,9 @@ const DataTable = ({
     setSortConfig({ key, direction });
   };
 
-const sortedData = [...data].sort((a, b) => {
+  const sortedData = [...data].sort((a, b) => {
     if (!sortConfig.key) return 0;
     
-    const column = columns.find(col => col.key === sortConfig.key);
-    
-    // Use custom sort function if provided
-    if (column && column.sortFn) {
-      const result = column.sortFn(a, b);
-      return sortConfig.direction === 'asc' ? result : -result;
-    }
-    
-    // Default sorting
     const aValue = a[sortConfig.key];
     const bValue = b[sortConfig.key];
     

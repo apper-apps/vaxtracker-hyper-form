@@ -50,16 +50,14 @@ const InventoryTable = () => {
     filterLots();
   }, [vaccineLots, searchTerm, activeFilter]);
 
-const filterLots = () => {
+  const filterLots = () => {
     let filtered = [...vaccineLots];
 
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(lot => {
         const vaccine = getVaccineName(lot.vaccineId);
-        const abbreviation = getVaccineAbbreviation(lot.vaccineId);
         return vaccine.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               abbreviation.toLowerCase().includes(searchTerm.toLowerCase()) ||
                lot.lotNumber.toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
@@ -75,14 +73,9 @@ const filterLots = () => {
     setFilteredLots(filtered);
   };
 
-const getVaccineName = (vaccineId) => {
+  const getVaccineName = (vaccineId) => {
     const vaccine = vaccines.find(v => v.Id === vaccineId);
     return vaccine ? vaccine.name : 'Unknown';
-  };
-
-  const getVaccineAbbreviation = (vaccineId) => {
-    const vaccine = vaccines.find(v => v.Id === vaccineId);
-    return vaccine ? vaccine.abbreviation : 'Unknown';
   };
 
   const getVaccineFamily = (vaccineId) => {
@@ -146,41 +139,20 @@ const getVaccineName = (vaccineId) => {
     }
   };
 
-const columns = [
+  const columns = [
     {
       key: 'vaccine',
       label: 'Vaccine',
-      sortable: true,
-      sortFn: (a, b) => {
-        const aName = getVaccineName(a.vaccineId);
-        const bName = getVaccineName(b.vaccineId);
-        return aName.localeCompare(bName);
-      },
       render: (value, lot) => (
         <div>
           <div className="font-medium text-gray-900">{getVaccineName(lot.vaccineId)}</div>
-          <div className="text-sm text-gray-500">{getVaccineAbbreviation(lot.vaccineId)}</div>
+          <div className="text-sm text-gray-500">{getVaccineFamily(lot.vaccineId)}</div>
         </div>
       )
     },
     {
-      key: 'genericName',
-      label: 'Generic Name',
-      render: (value, lot) => (
-        <span className="font-medium text-gray-700">{getVaccineAbbreviation(lot.vaccineId)}</span>
-      ),
-      sortable: true,
-      sortKey: 'vaccineId',
-      sortFn: (a, b) => {
-        const aAbbr = getVaccineAbbreviation(a.vaccineId);
-        const bAbbr = getVaccineAbbreviation(b.vaccineId);
-        return aAbbr.localeCompare(bAbbr);
-      }
-    },
-    {
       key: 'lotNumber',
       label: 'Lot Number',
-      sortable: true,
       render: (value) => (
         <span className="font-mono text-sm">{value}</span>
       )
@@ -188,7 +160,6 @@ const columns = [
     {
       key: 'expirationDate',
       label: 'Expiration',
-      sortable: true,
       render: (value, lot) => {
         const expInfo = getExpirationInfo(lot);
         return (
@@ -202,7 +173,6 @@ const columns = [
     {
       key: 'quantityOnHand',
       label: 'On Hand',
-      sortable: true,
       render: (value, lot) => (
         <div className="text-center">
           <div className="text-lg font-semibold">{value}</div>
@@ -242,10 +212,10 @@ const columns = [
 
   return (
     <div className="space-y-6">
-<SearchBar
+      <SearchBar
         onSearch={setSearchTerm}
         onFilter={setActiveFilter}
-        placeholder="Search vaccines, generic names, or lot numbers..."
+        placeholder="Search vaccines or lot numbers..."
         filters={filters}
       />
 
