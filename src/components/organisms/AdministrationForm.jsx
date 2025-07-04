@@ -36,14 +36,20 @@ const loadData = async () => {
     try {
       setLoading(true);
       setVaccinesLoading(true);
+      setError(null);
       
       // Load vaccines first to ensure they're available for vaccine lot processing
       const vaccinesData = await vaccineService.getAll();
+      console.log('Loaded vaccines:', vaccinesData.length, 'vaccines');
       setVaccines(vaccinesData);
       setVaccinesLoading(false);
       
+      // Wait a moment to ensure vaccines state is updated
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
       // Then load vaccine lots with data integrity validation
       const lotsData = await vaccineLotService.getAll();
+      console.log('Loaded vaccine lots:', lotsData.length, 'lots');
       
       // Check if any data integrity repairs were made
       const integrityResult = await vaccineLotService.validateDataIntegrity();
@@ -54,8 +60,8 @@ const loadData = async () => {
       
       // Only show lots with available inventory
       const availableLots = lotsData.filter(lot => lot.quantityOnHand > 0);
+      console.log('Available lots for administration:', availableLots.length);
       setVaccineLots(availableLots);
-      setError(null);
     } catch (error) {
       console.error('Error loading data:', error);
       setError('Failed to load inventory data. Please check data integrity.');
@@ -75,9 +81,14 @@ const loadData = async () => {
   }, [vaccines]);
 
   // Memoized vaccine name lookup function
-  const getVaccineName = useCallback((vaccineId) => {
-    if (vaccinesLoading) return 'Loading...';
-    if (!vaccines.length) return 'Loading...';
+const getVaccineName = useCallback((vaccineId) => {
+    // Enhanced loading state checks
+    if (vaccinesLoading || loading) return 'Loading...';
+    if (!vaccines.length) {
+      console.warn('getVaccineName called but no vaccines loaded yet');
+      return 'Loading vaccines...';
+    }
+    
     if (vaccineId === null || vaccineId === undefined) {
       console.warn('getVaccineName called with null/undefined vaccine ID');
       return 'No Vaccine ID';
@@ -97,16 +108,22 @@ const loadData = async () => {
     if (!vaccine) {
       console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form.`);
       console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.error('VaccineMap size:', vaccineMap.size);
       console.error('This may indicate a data integrity issue between vaccine lots and vaccine master data');
       return `Vaccine ID ${parsedId} Not Found`;
     }
     return vaccine.name || 'Unnamed Vaccine';
-  }, [vaccines, vaccineMap, vaccinesLoading]);
+  }, [vaccines, vaccineMap, vaccinesLoading, loading]);
 
 // Memoized vaccine abbreviation lookup function
-  const getVaccineAbbreviation = useCallback((vaccineId) => {
-    if (vaccinesLoading) return 'Loading...';
-    if (!vaccines.length) return 'Loading...';
+const getVaccineAbbreviation = useCallback((vaccineId) => {
+    // Enhanced loading state checks
+    if (vaccinesLoading || loading) return 'Loading...';
+    if (!vaccines.length) {
+      console.warn('getVaccineAbbreviation called but no vaccines loaded yet');
+      return 'Loading...';
+    }
+    
     if (vaccineId === null || vaccineId === undefined) {
       console.warn('getVaccineAbbreviation called with null/undefined vaccine ID');
       return 'N/A';
@@ -126,11 +143,12 @@ const loadData = async () => {
     if (!vaccine) {
       console.error(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form`);
       console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, abbreviation: v.abbreviation })));
+      console.error('VaccineMap size:', vaccineMap.size);
       console.error('This may indicate a data integrity issue between vaccine lots and vaccine master data');
       return 'N/A';
     }
     return vaccine.abbreviation || 'N/A';
-  }, [vaccines, vaccineMap, vaccinesLoading]);
+  }, [vaccines, vaccineMap, vaccinesLoading, loading]);
 
   const getExpirationStatus = (lot) => {
     const today = new Date();
@@ -352,7 +370,7 @@ if (loading) {
     return <Error message={error} onRetry={loadData} />;
   }
 
-  if (vaccinesLoading) {
+if (vaccinesLoading || !vaccines.length) {
     return <Loading message="Loading vaccine information..." />;
   }
   if (vaccineLots.length === 0) {
