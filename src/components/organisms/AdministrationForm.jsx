@@ -170,15 +170,16 @@ const AdministrationForm = ({ onSuccess }) => {
       key: 'vaccine',
       label: 'Vaccine Name',
       sortable: true,
-      sortFn: (a, b) => {
-        const aName = getVaccineName(a.vaccineId);
-        const bName = getVaccineName(b.vaccineId);
+sortFn: (a, b) => {
+        if (!a || !b) return 0;
+        const aName = getVaccineName(a.vaccineId) || '';
+        const bName = getVaccineName(b.vaccineId) || '';
         return aName.localeCompare(bName);
       },
       render: (lot) => (
         <div>
           <div className="font-medium text-gray-900">
-            {getVaccineName(lot.vaccineId)}
+            {lot ? getVaccineName(lot?.vaccineId) || 'Unknown Vaccine' : 'N/A'}
           </div>
         </div>
       )
@@ -188,14 +189,15 @@ const AdministrationForm = ({ onSuccess }) => {
       label: 'Generic Name',
       render: (lot) => (
         <span className="text-gray-600">
-          {getVaccineAbbreviation(lot.vaccineId)}
+          {lot ? getVaccineAbbreviation(lot?.vaccineId) || 'N/A' : 'N/A'}
         </span>
       ),
       sortable: true,
       sortKey: 'vaccineId',
       sortFn: (a, b) => {
-        const aAbbr = getVaccineAbbreviation(a.vaccineId);
-        const bAbbr = getVaccineAbbreviation(b.vaccineId);
+        if (!a || !b) return 0;
+        const aAbbr = getVaccineAbbreviation(a.vaccineId) || '';
+        const bAbbr = getVaccineAbbreviation(b.vaccineId) || '';
         return aAbbr.localeCompare(bAbbr);
       }
     },
