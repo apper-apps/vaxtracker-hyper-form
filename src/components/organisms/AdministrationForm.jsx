@@ -85,23 +85,27 @@ const loadData = async () => {
       return 'Loading...';
     }
     
-    // Handle null/undefined vaccine IDs
+    // Handle null/undefined vaccine IDs gracefully
     if (vaccineId === null || vaccineId === undefined) {
-      return 'Unknown Vaccine (No ID)';
+      console.warn('AdministrationForm: Vaccine lot has null/undefined vaccineId');
+      return 'Unknown Vaccine';
     }
     
     // Handle both string and integer vaccine IDs
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
     if (isNaN(parsedId) || parsedId <= 0) {
-      return 'Invalid Vaccine ID';
+      console.warn(`AdministrationForm: Invalid vaccine ID: ${vaccineId} (type: ${typeof vaccineId})`);
+      return 'Invalid Vaccine';
     }
     
     // Use direct array search for vaccine lookup
     const vaccine = vaccines.find(v => v.Id === parsedId);
     
     if (!vaccine) {
-      return `Vaccine ID ${parsedId} Not Found`;
+      console.error(`AdministrationForm: Vaccine not found for ID: ${parsedId}`);
+      console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      return 'Vaccine Not Found';
     }
     
     return vaccine.name || 'Unnamed Vaccine';
@@ -114,8 +118,9 @@ const loadData = async () => {
       return '...';
     }
     
-    // Handle null/undefined vaccine IDs
+    // Handle null/undefined vaccine IDs gracefully
     if (vaccineId === null || vaccineId === undefined) {
+      console.warn('AdministrationForm: Vaccine lot has null/undefined vaccineId for abbreviation lookup');
       return 'N/A';
     }
     
@@ -123,6 +128,7 @@ const loadData = async () => {
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
     if (isNaN(parsedId) || parsedId <= 0) {
+      console.warn(`AdministrationForm: Invalid vaccine ID for abbreviation: ${vaccineId} (type: ${typeof vaccineId})`);
       return 'N/A';
     }
     
@@ -130,6 +136,7 @@ const loadData = async () => {
     const vaccine = vaccines.find(v => v.Id === parsedId);
     
     if (!vaccine) {
+      console.error(`AdministrationForm: Vaccine not found for abbreviation lookup, ID: ${parsedId}`);
       return 'N/A';
     }
     
