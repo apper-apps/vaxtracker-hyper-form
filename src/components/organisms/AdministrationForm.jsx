@@ -222,10 +222,10 @@ const columns = [
         const bName = getVaccineName(b.vaccineId) || '';
         return aName.localeCompare(bName);
       },
-      render: (lot) => (
+render: (lot) => (
         <div>
           <div className="font-medium text-gray-900">
-            {lot ? getVaccineName(lot.vaccineId) : 'Unknown Vaccine'}
+            {getVaccineName(lot?.vaccineId)}
           </div>
         </div>
       )
@@ -233,9 +233,9 @@ const columns = [
     {
       key: 'genericName',
       label: 'Generic Name',
-      render: (lot) => (
+render: (lot) => (
         <span className="text-gray-600">
-          {lot ? getVaccineAbbreviation(lot.vaccineId) : 'N/A'}
+          {getVaccineAbbreviation(lot?.vaccineId)}
         </span>
       ),
       sortable: true,
