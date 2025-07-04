@@ -5,12 +5,12 @@ import ApperIcon from '@/components/ApperIcon';
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
 
-  const navigationItems = [
+const navigationItems = [
     { path: '/', label: 'Dashboard', icon: 'LayoutDashboard' },
     { path: '/receiving', label: 'Receiving', icon: 'PackageCheck' },
     { path: '/administration', label: 'Administration', icon: 'Syringe' },
-    { path: '/inventory', label: 'Inventory', icon: 'Package' },
     { path: '/reconciliation', label: 'Reconciliation', icon: 'Calculator' },
+    { path: '/inventory', label: 'Inventory', icon: 'Package' },
     { path: '/reports', label: 'Reports', icon: 'FileText' },
     { path: '/settings', label: 'Settings', icon: 'Settings' }
   ];

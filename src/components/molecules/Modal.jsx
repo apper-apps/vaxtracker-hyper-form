@@ -37,13 +37,13 @@ const Modal = ({
     }
   };
 
-  return (
+return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <motion.div
-              className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+              className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[9998]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -55,7 +55,7 @@ const Modal = ({
             </span>
 
             <motion.div
-              className={`inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:p-6 ${getSizeClasses()} ${className}`}
+              className={`relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:p-6 w-full ${getSizeClasses()} ${className} z-[9999]`}
               initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 50 }}

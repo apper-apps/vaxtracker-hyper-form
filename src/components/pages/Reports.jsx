@@ -62,7 +62,7 @@ const Reports = () => {
     }
   };
 
-  const generateInventoryReport = (lots, vaccines) => {
+const generateInventoryReport = (lots, vaccines) => {
     return lots.map(lot => {
       const vaccine = vaccines.find(v => v.Id === lot.vaccineId);
       return {
@@ -76,7 +76,7 @@ const Reports = () => {
     });
   };
 
-  const generateAdministrationReport = (administrations, lots, vaccines) => {
+const generateAdministrationReport = (administrations, lots, vaccines) => {
     return administrations.map(admin => {
       const lot = lots.find(l => l.Id === admin.lotId);
       const vaccine = vaccines.find(v => v.Id === lot?.vaccineId);
@@ -91,7 +91,7 @@ const Reports = () => {
     });
   };
 
-  const generateExpirationReport = (lots, vaccines) => {
+const generateExpirationReport = (lots, vaccines) => {
     const today = new Date();
     return lots
       .filter(lot => {

@@ -111,7 +111,7 @@ const AdministrationForm = ({ onSuccess }) => {
     }
   };
 
-  const getVaccineName = (vaccineId) => {
+const getVaccineName = (vaccineId) => {
     const vaccine = vaccines.find(v => v.Id === vaccineId);
     return vaccine ? vaccine.name : 'Unknown';
   };
