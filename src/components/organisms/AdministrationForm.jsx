@@ -1,20 +1,22 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
-import { differenceInDays } from 'date-fns';
-import Input from '@/components/atoms/Input';
-import Button from '@/components/atoms/Button';
-import Card from '@/components/atoms/Card';
-import Badge from '@/components/atoms/Badge';
-import DataTable from '@/components/molecules/DataTable';
-import Loading from '@/components/ui/Loading';
-import Error from '@/components/ui/Error';
-import Empty from '@/components/ui/Empty';
-import ApperIcon from '@/components/ApperIcon';
-import { vaccineLotService } from '@/services/api/vaccineLotService';
-import { administrationService } from '@/services/api/administrationService';
-import { vaccineService } from '@/services/api/vaccineService';
-import { validateAdministeredDoses } from '@/utils/validationUtils';
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { motion } from "framer-motion";
+import { differenceInDays } from "date-fns";
+import { getExpirationStatus } from "@/utils/dateUtils";
+import { validateAdministeredDoses } from "@/utils/validationUtils";
+import ApperIcon from "@/components/ApperIcon";
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import Input from "@/components/atoms/Input";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import Inventory from "@/components/pages/Inventory";
+import DataTable from "@/components/molecules/DataTable";
+import { vaccineLotService } from "@/services/api/vaccineLotService";
+import { vaccineService } from "@/services/api/vaccineService";
+import { administrationService } from "@/services/api/administrationService";
 
 const AdministrationForm = ({ onSuccess }) => {
   const [loading, setLoading] = useState(true);
@@ -89,7 +91,7 @@ const getVaccineAbbreviation = (vaccineId) => {
     
     // Validate parsing was successful and ID is valid
     if (isNaN(parsedId) || parsedId <= 0) {
-      console.error(`Invalid vaccine ID format for abbreviation in administration: ${vaccineId} (type: ${typeof vaccineId})`);
+      console.error(`Invalid vaccine ID format in administration: ${vaccineId} (type: ${typeof vaccineId})`);
       console.error('Available vaccine IDs:', vaccines.map(v => v.Id));
       return 'N/A';
     }
@@ -209,21 +211,21 @@ const handleDoseChange = (lotId, value) => {
     }
   };
 
-  const columns = [
+const columns = [
     {
       key: 'vaccine',
       label: 'Vaccine Name',
       sortable: true,
-sortFn: (a, b) => {
+      sortFn: (a, b) => {
         if (!a || !b) return 0;
         const aName = getVaccineName(a.vaccineId) || '';
         const bName = getVaccineName(b.vaccineId) || '';
         return aName.localeCompare(bName);
       },
-render: (lot) => (
+      render: (lot) => (
         <div>
           <div className="font-medium text-gray-900">
-            {getVaccineName(lot.vaccineId)}
+            {lot ? getVaccineName(lot.vaccineId) : 'Unknown Vaccine'}
           </div>
         </div>
       )
@@ -231,17 +233,16 @@ render: (lot) => (
     {
       key: 'genericName',
       label: 'Generic Name',
-render: (lot) => (
+      render: (lot) => (
         <span className="text-gray-600">
-          {getVaccineAbbreviation(lot.vaccineId)}
+          {lot ? getVaccineAbbreviation(lot.vaccineId) : 'N/A'}
         </span>
       ),
       sortable: true,
       sortKey: 'vaccineId',
       sortFn: (a, b) => {
-        if (!a || !b) return 0;
-        const aAbbr = getVaccineAbbreviation(a.vaccineId) || '';
-        const bAbbr = getVaccineAbbreviation(b.vaccineId) || '';
+        const aAbbr = getVaccineAbbreviation(a?.vaccineId);
+        const bAbbr = getVaccineAbbreviation(b?.vaccineId);
         return aAbbr.localeCompare(bAbbr);
       }
     },
@@ -249,7 +250,7 @@ render: (lot) => (
       key: 'lotNumber',
       label: 'Lot Number',
       sortable: true,
-render: (lot) => (
+      render: (lot) => (
         <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
           {lot?.lotNumber || 'N/A'}
         </span>
@@ -259,27 +260,18 @@ render: (lot) => (
       key: 'expirationDate',
       label: 'Expiration Date',
       sortable: true,
-render: (lot) => {
-        if (!lot) return <span className="text-gray-500">N/A</span>;
-        return (
-          <div className="space-y-1">
-            <div className="text-sm text-gray-900">
-              {lot.expirationDate ? new Date(lot.expirationDate).toLocaleDateString() : 'N/A'}
-            </div>
-            {getStatusBadge(lot)}
-          </div>
-        );
-      },
-      sortFn: (a, b) => {
-        if (!a || !b) return 0;
-        return new Date(a.expirationDate || 0) - new Date(b.expirationDate || 0);
-      }
+      render: (lot) => (
+        <div className="flex items-center space-x-2">
+          <div className="text-sm">{lot?.expirationDate || 'N/A'}</div>
+          {lot && getStatusBadge(lot)}
+        </div>
+      )
     },
     {
       key: 'quantityOnHand',
-      label: 'Quantity On Hand',
+      label: 'Available Doses',
       sortable: true,
-render: (lot) => (
+      render: (lot) => (
         <div className="text-center">
           <span className="text-lg font-semibold text-gray-900">
             {lot?.quantityOnHand ?? 0}
@@ -291,7 +283,7 @@ render: (lot) => (
     {
       key: 'adminDoses',
       label: 'Administered Doses',
-render: (lot) => {
+      render: (lot) => {
         if (!lot) return <span className="text-gray-500">N/A</span>;
         return (
           <div className="flex items-center space-x-2 min-w-[200px]">
