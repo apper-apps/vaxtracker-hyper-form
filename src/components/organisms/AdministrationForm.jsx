@@ -1,411 +1,236 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
-import { motion } from "framer-motion";
-import { differenceInDays } from "date-fns";
-import { getExpirationStatus } from "@/utils/dateUtils";
-import { validateAdministeredDoses } from "@/utils/validationUtils";
-import ApperIcon from "@/components/ApperIcon";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
-import Card from "@/components/atoms/Card";
-import Input from "@/components/atoms/Input";
-import Empty from "@/components/ui/Empty";
-import Error from "@/components/ui/Error";
-import Loading from "@/components/ui/Loading";
-import Inventory from "@/components/pages/Inventory";
-import DataTable from "@/components/molecules/DataTable";
-import { vaccineLotService } from "@/services/api/vaccineLotService";
-import { vaccineService } from "@/services/api/vaccineService";
-import { administrationService } from "@/services/api/administrationService";
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import { motion } from 'framer-motion';
+import Input from '@/components/atoms/Input';
+import Select from '@/components/atoms/Select';
+import Button from '@/components/atoms/Button';
+import FormSection from '@/components/molecules/FormSection';
+import Card from '@/components/atoms/Card';
+import { vaccineLotService } from '@/services/api/vaccineLotService';
+import { administrationService } from '@/services/api/administrationService';
+import { vaccineService } from '@/services/api/vaccineService';
 
 const AdministrationForm = ({ onSuccess }) => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    lotId: '',
+    ageGroup: '',
+    dosesAdministered: '',
+    administeredBy: ''
+  });
+  
+  const [loading, setLoading] = useState(false);
   const [vaccineLots, setVaccineLots] = useState([]);
   const [vaccines, setVaccines] = useState([]);
-  const [vaccinesLoading, setVaccinesLoading] = useState(true);
-  const [administeredDoses, setAdministeredDoses] = useState({});
-  const [submitting, setSubmitting] = useState({});
-  const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [lotsData, vaccinesData] = await Promise.all([
+          vaccineLotService.getAll(),
+          vaccineService.getAll()
+        ]);
+        
+        // Only show lots with available inventory
+        const availableLots = lotsData.filter(lot => lot.quantityOnHand > 0);
+        setVaccineLots(availableLots);
+        setVaccines(vaccinesData);
+      } catch (error) {
+        toast.error('Failed to load data');
+      }
+    };
     loadData();
   }, []);
 
-const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      setVaccinesLoading(true);
-      
-      // Load vaccines first and ensure they're fully loaded
-      console.log('Loading vaccines...');
-      const vaccinesData = await vaccineService.getAll();
-      console.log(`Loaded ${vaccinesData.length} vaccines`);
-      setVaccines(vaccinesData);
-      setVaccinesLoading(false);
-      
-      // Only proceed with lots after vaccines are confirmed loaded
-      if (vaccinesData.length > 0) {
-        // Validate and repair data integrity before loading lots
-        const integrityResult = await vaccineLotService.validateDataIntegrity();
-        if (integrityResult.repaired > 0) {
-          console.log(`Data integrity check: ${integrityResult.repaired} lots repaired`);
-          toast.info(`Data integrity check: ${integrityResult.repaired} lots repaired`);
-        }
-        
-        // Load available lots (service handles filtering)
-        console.log('Loading vaccine lots...');
-        const availableLots = await vaccineLotService.getAvailableLots();
-        console.log(`Loaded ${availableLots.length} available lots`);
-        
-        setVaccineLots(availableLots);
-      } else {
-        console.warn('No vaccines loaded, skipping lot loading');
-        setVaccineLots([]);
-      }
-      
-    } catch (error) {
-      console.error('Error loading data:', error);
-      setError('Failed to load inventory data. Please check data integrity and try again.');
-    } finally {
-      setLoading(false);
-      setVaccinesLoading(false);
-    }
-  };
-
-  // Memoized vaccine map for efficient lookups
-  const vaccineMap = useMemo(() => {
-    const map = new Map();
-    vaccines.forEach(vaccine => {
-      if (vaccine?.Id) {
-        map.set(vaccine.Id, vaccine);
-      }
-    });
-    return map;
-  }, [vaccines]);
-
-// Memoized vaccine name lookup function
-  const getVaccineName = useCallback((vaccineId) => {
-    // Return loading state if vaccines are still being loaded
-    if (vaccines.length === 0 && vaccinesLoading) {
-      return 'Loading...';
-    }
-    
-    // Handle null/undefined vaccine IDs gracefully
-    if (vaccineId === null || vaccineId === undefined) {
-      console.warn('AdministrationForm: Vaccine lot has null/undefined vaccineId');
-      return 'Unknown Vaccine';
-    }
-    
-    // Handle both string and integer vaccine IDs
-    const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
-    
-    if (isNaN(parsedId) || parsedId <= 0) {
-      console.warn(`AdministrationForm: Invalid vaccine ID: ${vaccineId} (type: ${typeof vaccineId})`);
-      return 'Invalid Vaccine';
-    }
-    
-    // Use direct array search for vaccine lookup
-    const vaccine = vaccines.find(v => v.Id === parsedId);
-    
-    if (!vaccine) {
-      console.error(`AdministrationForm: Vaccine not found for ID: ${parsedId}`);
-      console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, name: v.name })));
-      return 'Vaccine Not Found';
-    }
-    
-return vaccine.Name || vaccine.name || 'Unnamed Vaccine';
-  }, [vaccines, vaccinesLoading]);
-
-// Memoized vaccine abbreviation lookup function
-  const getVaccineAbbreviation = useCallback((vaccineId) => {
-    // Return loading state if vaccines are still being loaded
-    if (vaccines.length === 0 && vaccinesLoading) {
-      return '...';
-    }
-    
-    // Handle null/undefined vaccine IDs gracefully
-    if (vaccineId === null || vaccineId === undefined) {
-      console.warn('AdministrationForm: Vaccine lot has null/undefined vaccineId for abbreviation lookup');
-      return 'N/A';
-    }
-    
-    // Handle both string and integer vaccine IDs
-    const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
-    
-    if (isNaN(parsedId) || parsedId <= 0) {
-      console.warn(`AdministrationForm: Invalid vaccine ID for abbreviation: ${vaccineId} (type: ${typeof vaccineId})`);
-      return 'N/A';
-    }
-    
-    // Use direct array search for vaccine lookup
-    const vaccine = vaccines.find(v => v.Id === parsedId);
-    
-    if (!vaccine) {
-      console.error(`AdministrationForm: Vaccine not found for abbreviation lookup, ID: ${parsedId}`);
-      return 'N/A';
-    }
-    
-    return vaccine.abbreviation || 'N/A';
-  }, [vaccines, vaccinesLoading]);
-
-
-
-const getStatusBadge = (lot) => {
-    const status = getExpirationStatus(lot.expirationDate);
-    const daysUntilExpiry = differenceInDays(new Date(lot.expirationDate), new Date());
-    
-    switch (status) {
-      case 'expired':
-        return <Badge variant="error">Expired</Badge>;
-      case 'expiring-soon':
-        return <Badge variant="error">{daysUntilExpiry} days</Badge>;
-      case 'warning':
-        return <Badge variant="warning">{daysUntilExpiry} days</Badge>;
-      default:
-        return <Badge variant="success">{daysUntilExpiry} days</Badge>;
-    }
-  };
-
-const handleDoseChange = (lotId, value) => {
-    setAdministeredDoses(prev => ({
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
       ...prev,
-      [lotId]: value
+      [field]: value
     }));
-
-    // Validate input
-    const lot = vaccineLots.find(l => l?.Id === lotId);
-    if (lot) {
-      const error = validateAdministeredDoses(value, lot.quantityOnHand, lot.lotNumber);
-      setErrors(prev => ({
-        ...prev,
-        [lotId]: error
-      }));
-    }
   };
 
-  const handleAdminister = async (lot) => {
-    const doses = administeredDoses[lot.Id];
-    if (!doses || doses.toString().trim() === '') {
-      toast.error('Please enter the number of doses to administer');
-      return;
-    }
-
-    const error = validateAdministeredDoses(doses, lot.quantityOnHand, lot.lotNumber);
-    if (error) {
-      toast.error(error);
-      return;
-    }
-
-    setSubmitting(prev => ({ ...prev, [lot.Id]: true }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      const dosesNum = parseInt(doses);
-      
+      // Validate required fields
+      if (!formData.lotId || !formData.ageGroup || !formData.dosesAdministered || !formData.administeredBy) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      const dosesAdministered = parseInt(formData.dosesAdministered);
+      const selectedLot = vaccineLots.find(lot => lot.Id === parseInt(formData.lotId));
+
+      if (!selectedLot) {
+        toast.error('Selected lot not found');
+        return;
+      }
+
+      if (dosesAdministered > selectedLot.quantityOnHand) {
+        toast.error(`Not enough doses available. Only ${selectedLot.quantityOnHand} doses in stock.`);
+        return;
+      }
+
       // Create administration record
       const adminData = {
-        lotId: lot.Id,
-        dosesAdministered: dosesNum,
+        lotId: parseInt(formData.lotId),
+        ageGroup: formData.ageGroup,
+        dosesAdministered: dosesAdministered,
         dateAdministered: new Date().toISOString(),
-        administeredBy: 'Current User' // In real app, get from auth context
+        administeredBy: formData.administeredBy
       };
 
       await administrationService.create(adminData);
       
       // Update lot inventory
-      const updatedQuantity = lot.quantityOnHand - dosesNum;
-      await vaccineLotService.update(lot.Id, {
-        ...lot,
+      const updatedQuantity = selectedLot.quantityOnHand - dosesAdministered;
+      await vaccineLotService.update(selectedLot.Id, {
+        ...selectedLot,
         quantityOnHand: updatedQuantity
       });
       
-      toast.success(`${dosesNum} doses administered successfully`);
+      toast.success('Doses administered successfully');
       
-      // Clear input and refresh data
-      setAdministeredDoses(prev => ({
-        ...prev,
-        [lot.Id]: ''
-      }));
-      setErrors(prev => ({
-        ...prev,
-        [lot.Id]: null
-      }));
+      // Reset form
+      setFormData({
+        lotId: '',
+        ageGroup: '',
+        dosesAdministered: '',
+        administeredBy: ''
+      });
       
       if (onSuccess) {
         onSuccess();
       }
-      
-      // Reload data to get updated quantities
-      loadData();
     } catch (error) {
       console.error('Error recording administration:', error);
       toast.error('Failed to record administration');
     } finally {
-      setSubmitting(prev => ({ ...prev, [lot.Id]: false }));
+      setLoading(false);
     }
   };
 
-// Memoized columns definition to prevent unnecessary re-renders
-  const columns = useMemo(() => [
-    {
-      key: 'vaccine',
-      label: 'Vaccine Name',
-      sortable: true,
-      sortFn: (a, b) => {
-        if (!a || !b) return 0;
-        const aName = getVaccineName(a.vaccineId) || '';
-        const bName = getVaccineName(b.vaccineId) || '';
-        return aName.localeCompare(bName);
-      },
-      render: (lot) => (
-        <div>
-          <div className="font-medium text-gray-900">
-            {getVaccineName(lot?.vaccineId)}
-          </div>
-        </div>
-      )
-    },
-{
-      key: 'genericName',
-      label: 'Generic Name',
-      render: (lot) => (
-        <span className="text-gray-600">
-          {getVaccineAbbreviation(lot?.vaccineId)}
-        </span>
-      ),
-      sortable: true,
-      sortKey: 'vaccineId',
-      sortFn: (a, b) => {
-        const aAbbr = getVaccineAbbreviation(a?.vaccineId);
-        const bAbbr = getVaccineAbbreviation(b?.vaccineId);
-        return aAbbr.localeCompare(bAbbr);
-      }
-    },
-    {
-      key: 'lotNumber',
-      label: 'Lot Number',
-      sortable: true,
-      render: (lot) => (
-        <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-          {lot?.lotNumber || 'N/A'}
-        </span>
-      )
-    },
-    {
-      key: 'expirationDate',
-      label: 'Expiration Date',
-      sortable: true,
-      render: (lot) => (
-        <div className="flex items-center space-x-2">
-          <div className="text-sm">{lot?.expirationDate || 'N/A'}</div>
-          {lot && getStatusBadge(lot)}
-        </div>
-      )
-    },
-    {
-      key: 'quantityOnHand',
-      label: 'Available Doses',
-      sortable: true,
-      render: (lot) => (
-        <div className="text-center">
-          <span className="text-lg font-semibold text-gray-900">
-            {lot?.quantityOnHand ?? 0}
-          </span>
-          <div className="text-xs text-gray-500">doses</div>
-        </div>
-      )
-    },
-    {
-      key: 'adminDoses',
-      label: 'Administered Doses',
-      render: (lot) => {
-        if (!lot) return <span className="text-gray-500">N/A</span>;
-        return (
-          <div className="flex items-center space-x-2 min-w-[200px]">
-            <div className="flex-1">
-              <Input
-                type="number"
-                value={administeredDoses[lot.Id] || ''}
-                onChange={(e) => handleDoseChange(lot.Id, e.target.value)}
-                placeholder="0"
-                min="1"
-                max={lot.quantityOnHand}
-                className={errors[lot.Id] ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}
-              />
-              {errors[lot.Id] && (
-                <div className="text-xs text-red-600 mt-1">
-                  {errors[lot.Id]}
-                </div>
-              )}
-            </div>
-            <Button
-              size="sm"
-              onClick={() => handleAdminister(lot)}
-              loading={submitting[lot.Id]}
-              disabled={!administeredDoses[lot.Id] || errors[lot.Id] || submitting[lot.Id]}
-              icon="Syringe"
-            >
-Record
-            </Button>
-          </div>
-        );
-      }
-    }
-  ], [getVaccineName, getVaccineAbbreviation, administeredDoses, errors, submitting, handleDoseChange, handleAdminister]);
+const getVaccineName = (vaccineId) => {
+    const vaccine = vaccines.find(v => v.Id === vaccineId);
+    return vaccine ? vaccine.name : 'Unknown';
+  };
 
-  if (loading) {
-    return <Loading message="Loading inventory data..." />;
-  }
+  const lotOptions = vaccineLots.map(lot => ({
+    value: lot.Id,
+    label: `${getVaccineName(lot.vaccineId)} - Lot ${lot.lotNumber} (${lot.quantityOnHand} available)`
+  }));
 
-  if (error) {
-    return <Error message={error} onRetry={loadData} />;
-  }
+  const ageGroupOptions = [
+    { value: '0-6 months', label: '0-6 months' },
+    { value: '6-12 months', label: '6-12 months' },
+    { value: '1-2 years', label: '1-2 years' },
+    { value: '2-5 years', label: '2-5 years' },
+    { value: '5-11 years', label: '5-11 years' },
+    { value: '12-17 years', label: '12-17 years' },
+    { value: '18-64 years', label: '18-64 years' },
+    { value: '65+ years', label: '65+ years' }
+  ];
 
-if (vaccinesLoading || vaccines.length === 0) {
-    return <Loading message="Loading vaccine information..." />;
-  }
-  if (vaccineLots.length === 0) {
-    return (
-      <Empty 
-        icon="Package"
-        title="No Available Inventory"
-        description="There are no vaccine lots with available inventory for administration."
-      />
-    );
-  }
+  const selectedLot = vaccineLots.find(lot => lot.Id === parseInt(formData.lotId));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="p-6">
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Available Inventory</h3>
-              <p className="text-sm text-gray-600">
-                Record doses administered by entering quantities and clicking Record
-              </p>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <ApperIcon name="Package" className="w-4 h-4" />
-              <span>{vaccineLots.length} lots available</span>
-            </div>
+    <Card className="p-6">
+      <motion.form
+        onSubmit={handleSubmit}
+        className="space-y-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <FormSection
+          title="Administration Details"
+          description="Record vaccine doses administered"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="Vaccine Lot"
+              value={formData.lotId}
+              onChange={(e) => handleInputChange('lotId', e.target.value)}
+              options={lotOptions}
+              placeholder="Select vaccine lot"
+              required
+            />
+            
+            <Select
+              label="Age Group"
+              value={formData.ageGroup}
+              onChange={(e) => handleInputChange('ageGroup', e.target.value)}
+              options={ageGroupOptions}
+              placeholder="Select age group"
+              required
+            />
+            
+            <Input
+              label="Doses Administered"
+              type="number"
+              value={formData.dosesAdministered}
+              onChange={(e) => handleInputChange('dosesAdministered', e.target.value)}
+              placeholder="0"
+              min="1"
+              max={selectedLot?.quantityOnHand || 999}
+              required
+            />
+            
+            <Input
+              label="Administered By"
+              value={formData.administeredBy}
+              onChange={(e) => handleInputChange('administeredBy', e.target.value)}
+              placeholder="Healthcare provider name"
+              required
+            />
           </div>
-        </div>
+          
+          {selectedLot && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-2">Selected Lot Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700 font-medium">Vaccine:</span>
+                  <span className="ml-2">{getVaccineName(selectedLot.vaccineId)}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700 font-medium">Available:</span>
+                  <span className="ml-2">{selectedLot.quantityOnHand} doses</span>
+                </div>
+                <div>
+                  <span className="text-blue-700 font-medium">Expires:</span>
+                  <span className="ml-2">{new Date(selectedLot.expirationDate).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </FormSection>
 
-        <DataTable
-          data={vaccineLots}
-          columns={columns}
-          searchKeys={['lotNumber']}
-          defaultSort={{ key: 'expirationDate', direction: 'asc' }}
-          className="min-w-full"
-        />
-      </Card>
-    </motion.div>
+        <div className="flex justify-end space-x-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setFormData({
+              lotId: '',
+              ageGroup: '',
+              dosesAdministered: '',
+              administeredBy: ''
+            })}
+          >
+            Reset
+          </Button>
+          
+          <Button
+            type="submit"
+            loading={loading}
+            icon="Syringe"
+          >
+            Record Administration
+          </Button>
+        </div>
+      </motion.form>
+    </Card>
   );
 };
 

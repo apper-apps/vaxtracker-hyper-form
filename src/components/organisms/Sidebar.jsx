@@ -8,10 +8,9 @@ const Sidebar = ({ isOpen, onClose }) => {
 const navigationItems = [
     { path: '/', label: 'Dashboard', icon: 'LayoutDashboard' },
     { path: '/receiving', label: 'Receiving', icon: 'PackageCheck' },
-{ path: '/administration', label: 'Administration', icon: 'Syringe' },
+    { path: '/administration', label: 'Administration', icon: 'Syringe' },
     { path: '/reconciliation', label: 'Reconciliation', icon: 'Calculator' },
     { path: '/inventory', label: 'Inventory', icon: 'Package' },
-    { path: '/vaccines', label: 'Vaccines', icon: 'ShieldCheck' },
     { path: '/reports', label: 'Reports', icon: 'FileText' },
     { path: '/settings', label: 'Settings', icon: 'Settings' }
   ];

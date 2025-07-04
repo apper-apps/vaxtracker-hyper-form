@@ -66,7 +66,7 @@ const generateInventoryReport = (lots, vaccines) => {
     return lots.map(lot => {
       const vaccine = vaccines.find(v => v.Id === lot.vaccineId);
       return {
-        vaccine: vaccine?.Name || vaccine?.name || 'Unknown',
+        vaccine: vaccine?.name || 'Unknown',
         lotNumber: lot.lotNumber,
         expirationDate: lot.expirationDate,
         quantityOnHand: lot.quantityOnHand,
@@ -81,7 +81,7 @@ const generateAdministrationReport = (administrations, lots, vaccines) => {
       const lot = lots.find(l => l.Id === admin.lotId);
       const vaccine = vaccines.find(v => v.Id === lot?.vaccineId);
       return {
-vaccine: vaccine?.Name || vaccine?.name || 'Unknown',
+        vaccine: vaccine?.name || 'Unknown',
         lotNumber: lot?.lotNumber || 'Unknown',
         ageGroup: admin.ageGroup,
         dosesAdministered: admin.dosesAdministered,
@@ -104,7 +104,7 @@ const generateExpirationReport = (lots, vaccines) => {
         const expDate = new Date(lot.expirationDate);
         const daysUntilExpiry = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
         return {
-vaccine: vaccine?.Name || vaccine?.name || 'Unknown',
+          vaccine: vaccine?.name || 'Unknown',
           lotNumber: lot.lotNumber,
           expirationDate: lot.expirationDate,
           quantityOnHand: lot.quantityOnHand,

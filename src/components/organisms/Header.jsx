@@ -1,94 +1,116 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { AuthContext } from "../../App";
-import { motion } from "framer-motion";
-import { formatDate } from "@/utils/dateUtils";
-import ApperIcon from "@/components/ApperIcon";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import ApperIcon from '@/components/ApperIcon';
+import Button from '@/components/atoms/Button';
+import Badge from '@/components/atoms/Badge';
 
-const Header = () => {
-  const location = useLocation();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const { logout } = useContext(AuthContext);
-  const { user } = useSelector((state) => state.user);
+const Header = ({ onMenuClick, title }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  const getPageTitle = () => {
-    switch (location.pathname) {
-      case '/':
-        return 'Dashboard';
-      case '/receiving':
-        return 'Vaccine Receiving';
-      case '/administration':
-        return 'Dose Administration';
-      case '/inventory':
-        return 'Vaccine Inventory';
-      case '/reconciliation':
-        return 'Monthly Reconciliation';
-      case '/reports':
-        return 'Reports';
-      case '/settings':
-        return 'Settings';
-      default:
-        return 'VaxTracker Pro';
-    }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
-  const handleLogout = () => {
-    logout();
-    setShowUserMenu(false);
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  {user?.firstName?.[0] || user?.name?.[0] || 'U'}
-                </span>
-              </div>
-              <span className="text-sm font-medium">
-                {user?.firstName || user?.name || 'User'}
-              </span>
-              <ApperIcon name="ChevronDown" size={16} />
-            </button>
+    <motion.header
+      className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40"
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Left Section */}
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon="Menu"
+              onClick={onMenuClick}
+              className="lg:hidden"
+            />
             
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">
-                    {user?.firstName || user?.name || 'User'}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {user?.emailAddress || 'user@example.com'}
-                  </p>
-                </div>
-                <div className="py-1">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-                  >
-                    <ApperIcon name="LogOut" size={16} />
-                    <span>Sign out</span>
-                  </button>
-                </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+              <p className="text-sm text-gray-500 hidden sm:block">
+                {formatDate(currentTime)}
+              </p>
+            </div>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center space-x-4">
+            {/* Time Display */}
+            <div className="hidden md:block text-right">
+              <div className="text-lg font-semibold text-gray-900">
+                {formatTime(currentTime)}
               </div>
-            )}
+              <div className="text-sm text-gray-500">
+                Live Time
+              </div>
+            </div>
+
+            {/* Alert Indicator */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon="Bell"
+                className="relative"
+              />
+              <Badge 
+                variant="error" 
+                size="sm"
+                className="absolute -top-2 -right-2 min-w-[20px] h-5 flex items-center justify-center"
+              >
+                3
+              </Badge>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="hidden sm:flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                icon="Download"
+              >
+                Export
+              </Button>
+              
+              <Button
+                variant="primary"
+                size="sm"
+                icon="Plus"
+              >
+                Quick Add
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };
+
 export default Header;
