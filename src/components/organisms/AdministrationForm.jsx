@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { differenceInDays } from "date-fns";
@@ -23,6 +23,7 @@ const AdministrationForm = ({ onSuccess }) => {
   const [error, setError] = useState(null);
   const [vaccineLots, setVaccineLots] = useState([]);
   const [vaccines, setVaccines] = useState([]);
+  const [vaccinesLoading, setVaccinesLoading] = useState(true);
   const [administeredDoses, setAdministeredDoses] = useState({});
   const [submitting, setSubmitting] = useState({});
   const [errors, setErrors] = useState({});
@@ -31,28 +32,44 @@ const AdministrationForm = ({ onSuccess }) => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+const loadData = async () => {
     try {
       setLoading(true);
-      const [lotsData, vaccinesData] = await Promise.all([
-        vaccineLotService.getAll(),
-        vaccineService.getAll()
-      ]);
+      setVaccinesLoading(true);
+      
+      // Load vaccines first to ensure they're available for vaccine lot processing
+      const vaccinesData = await vaccineService.getAll();
+      setVaccines(vaccinesData);
+      setVaccinesLoading(false);
+      
+      // Then load vaccine lots
+      const lotsData = await vaccineLotService.getAll();
       
       // Only show lots with available inventory
       const availableLots = lotsData.filter(lot => lot.quantityOnHand > 0);
       setVaccineLots(availableLots);
-      setVaccines(vaccinesData);
       setError(null);
     } catch (error) {
       console.error('Error loading data:', error);
       setError('Failed to load inventory data');
+      setVaccinesLoading(false);
     } finally {
       setLoading(false);
     }
   };
 
-const getVaccineName = (vaccineId) => {
+// Create a memoized vaccine lookup map for better performance
+  const vaccineMap = useMemo(() => {
+    const map = new Map();
+    vaccines.forEach(vaccine => {
+      map.set(vaccine.Id, vaccine);
+    });
+    return map;
+  }, [vaccines]);
+
+  // Memoized vaccine name lookup function
+  const getVaccineName = useCallback((vaccineId) => {
+    if (vaccinesLoading) return 'Loading...';
     if (!vaccines.length) return 'Loading...';
     if (vaccineId === null || vaccineId === undefined) {
       console.warn('getVaccineName called with null/undefined vaccine ID');
@@ -69,7 +86,7 @@ const getVaccineName = (vaccineId) => {
       return 'Invalid Vaccine ID';
     }
     
-    const vaccine = vaccines.find(v => v.Id === parsedId);
+    const vaccine = vaccineMap.get(parsedId);
     if (!vaccine) {
       console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form.`);
       console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, name: v.name })));
@@ -77,9 +94,11 @@ const getVaccineName = (vaccineId) => {
       return `Vaccine ID ${parsedId} Not Found`;
     }
     return vaccine.name || 'Unnamed Vaccine';
-  };
+  }, [vaccines, vaccineMap, vaccinesLoading]);
 
-const getVaccineAbbreviation = (vaccineId) => {
+// Memoized vaccine abbreviation lookup function
+  const getVaccineAbbreviation = useCallback((vaccineId) => {
+    if (vaccinesLoading) return 'Loading...';
     if (!vaccines.length) return 'Loading...';
     if (vaccineId === null || vaccineId === undefined) {
       console.warn('getVaccineAbbreviation called with null/undefined vaccine ID');
@@ -96,7 +115,7 @@ const getVaccineAbbreviation = (vaccineId) => {
       return 'N/A';
     }
     
-    const vaccine = vaccines.find(v => v.Id === parsedId);
+    const vaccine = vaccineMap.get(parsedId);
     if (!vaccine) {
       console.error(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form`);
       console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, abbreviation: v.abbreviation })));
@@ -104,7 +123,7 @@ const getVaccineAbbreviation = (vaccineId) => {
       return 'N/A';
     }
     return vaccine.abbreviation || 'N/A';
-  };
+  }, [vaccines, vaccineMap, vaccinesLoading]);
 
   const getExpirationStatus = (lot) => {
     const today = new Date();
@@ -211,7 +230,8 @@ const handleDoseChange = (lotId, value) => {
     }
   };
 
-const columns = [
+// Memoized columns definition to prevent unnecessary re-renders
+  const columns = useMemo(() => [
     {
       key: 'vaccine',
       label: 'Vaccine Name',
@@ -222,7 +242,7 @@ const columns = [
         const bName = getVaccineName(b.vaccineId) || '';
         return aName.localeCompare(bName);
       },
-render: (lot) => (
+      render: (lot) => (
         <div>
           <div className="font-medium text-gray-900">
             {getVaccineName(lot?.vaccineId)}
@@ -230,10 +250,10 @@ render: (lot) => (
         </div>
       )
     },
-    {
+{
       key: 'genericName',
       label: 'Generic Name',
-render: (lot) => (
+      render: (lot) => (
         <span className="text-gray-600">
           {getVaccineAbbreviation(lot?.vaccineId)}
         </span>
@@ -314,18 +334,20 @@ render: (lot) => (
             </Button>
           </div>
         );
-      }
+}
     }
-  ];
-
-  if (loading) {
-    return <Loading message="Loading inventory..." />;
+  ], [getVaccineName, getVaccineAbbreviation, administeredDoses, errors, submitting, handleDoseChange, handleAdminister]);
+if (loading) {
+    return <Loading message="Loading inventory data..." />;
   }
 
   if (error) {
     return <Error message={error} onRetry={loadData} />;
   }
 
+  if (vaccinesLoading) {
+    return <Loading message="Loading vaccine information..." />;
+  }
   if (vaccineLots.length === 0) {
     return (
       <Empty 
