@@ -6,7 +6,7 @@ import Select from '@/components/atoms/Select';
 import Button from '@/components/atoms/Button';
 import FormSection from '@/components/molecules/FormSection';
 import Card from '@/components/atoms/Card';
-import { vaccineService } from '@/services/api/vaccineService';
+import vaccineService from '@/services/api/vaccineService';
 import { vaccineLotService } from '@/services/api/vaccineLotService';
 
 const VaccineReceivingForm = ({ onSuccess }) => {
