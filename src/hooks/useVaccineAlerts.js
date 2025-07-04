@@ -12,7 +12,7 @@ export const useVaccineAlerts = () => {
     const newAlerts = [];
     const today = new Date();
 
-lots.forEach(lot => {
+    lots.forEach(lot => {
       const vaccine = vaccines.find(v => v.Id === lot.vaccineId);
       const vaccineName = vaccine ? vaccine.name : 'Unknown';
       const expirationDate = new Date(lot.expirationDate);
@@ -20,11 +20,6 @@ lots.forEach(lot => {
 
       // Only create alerts for lots with inventory
       if (lot.quantityOnHand > 0) {
-        // Get vaccine-specific thresholds from inventory hook
-        const { getThresholdForVaccine } = useVaccineInventory();
-        const lowStockThreshold = getThresholdForVaccine(lot.vaccineId, 'low_stock') || 10;
-        const expirationThreshold = getThresholdForVaccine(lot.vaccineId, 'expiration') || 30;
-
         // Expired vaccines
         if (daysUntilExpiry < 0) {
           newAlerts.push({
@@ -39,8 +34,8 @@ lots.forEach(lot => {
             message: `${vaccineName} (Lot ${lot.lotNumber}) expired ${Math.abs(daysUntilExpiry)} days ago`
           });
         }
-        // Expiring soon (within configured threshold days)
-        else if (daysUntilExpiry <= expirationThreshold) {
+        // Expiring soon (within 30 days)
+        else if (daysUntilExpiry <= 30) {
           newAlerts.push({
             id: `expiring-${lot.Id}`,
             type: 'expiring',
@@ -54,8 +49,8 @@ lots.forEach(lot => {
           });
         }
 
-        // Low stock (using configured threshold)
-        if (lot.quantityOnHand <= lowStockThreshold) {
+        // Low stock (separate from expiration)
+        if (lot.quantityOnHand <= 10) {
           newAlerts.push({
             id: `low-stock-${lot.Id}`,
             type: 'low-stock',

@@ -1,15 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { toast } from "react-toastify";
-import { alertThresholdService } from "@/services/api/alertThresholdService";
-import ApperIcon from "@/components/ApperIcon";
-import Select from "@/components/atoms/Select";
-import Button from "@/components/atoms/Button";
-import Card from "@/components/atoms/Card";
-import Input from "@/components/atoms/Input";
-import FormSection from "@/components/molecules/FormSection";
-import Modal from "@/components/molecules/Modal";
-import { vaccineService } from "@/services/api/vaccineService";
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
+import Card from '@/components/atoms/Card';
+import Input from '@/components/atoms/Input';
+import Button from '@/components/atoms/Button';
+import FormSection from '@/components/molecules/FormSection';
+import ApperIcon from '@/components/ApperIcon';
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -24,18 +20,7 @@ const Settings = () => {
     smsNotifications: false
   });
 
-const [loading, setLoading] = useState(false);
-  const [thresholds, setThresholds] = useState([]);
-  const [vaccines, setVaccines] = useState([]);
-  const [thresholdsLoading, setThresholdsLoading] = useState(true);
-  const [showThresholdModal, setShowThresholdModal] = useState(false);
-  const [editingThreshold, setEditingThreshold] = useState(null);
-  const [thresholdForm, setThresholdForm] = useState({
-    Name: '',
-    vaccine: '',
-    threshold_type: 'low_stock',
-    threshold_value: ''
-  });
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field, value) => {
     setSettings(prev => ({
@@ -62,119 +47,7 @@ const [loading, setLoading] = useState(false);
     } finally {
       setLoading(false);
     }
-};
-
-  const loadThresholds = async () => {
-    try {
-      setThresholdsLoading(true);
-      const [thresholdsData, vaccinesData] = await Promise.all([
-        alertThresholdService.getAll(),
-        vaccineService.getAll()
-      ]);
-      setThresholds(thresholdsData);
-      setVaccines(vaccinesData);
-    } catch (error) {
-      console.error('Error loading thresholds:', error);
-      toast.error('Failed to load alert thresholds');
-    } finally {
-      setThresholdsLoading(false);
-    }
   };
-
-  const handleThresholdFormChange = (field, value) => {
-    setThresholdForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSaveThreshold = async (e) => {
-    e.preventDefault();
-    
-    try {
-      setLoading(true);
-      
-      if (editingThreshold) {
-        await alertThresholdService.update(editingThreshold.Id, thresholdForm);
-        toast.success('Threshold updated successfully');
-      } else {
-        await alertThresholdService.create(thresholdForm);
-        toast.success('Threshold created successfully');
-      }
-      
-      await loadThresholds();
-      setShowThresholdModal(false);
-      setEditingThreshold(null);
-      setThresholdForm({
-        Name: '',
-        vaccine: '',
-        threshold_type: 'low_stock',
-        threshold_value: ''
-      });
-    } catch (error) {
-      console.error('Error saving threshold:', error);
-      toast.error('Failed to save threshold');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteThreshold = async (thresholdId) => {
-    if (!confirm('Are you sure you want to delete this threshold?')) return;
-    
-    try {
-      setLoading(true);
-      await alertThresholdService.delete(thresholdId);
-      toast.success('Threshold deleted successfully');
-      await loadThresholds();
-    } catch (error) {
-      console.error('Error deleting threshold:', error);
-      toast.error('Failed to delete threshold');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openThresholdModal = (threshold = null) => {
-    if (threshold) {
-      setEditingThreshold(threshold);
-      setThresholdForm({
-        Name: threshold.Name || '',
-        vaccine: threshold.vaccine?.Id || '',
-        threshold_type: threshold.threshold_type || 'low_stock',
-        threshold_value: threshold.threshold_value || ''
-      });
-    } else {
-      setEditingThreshold(null);
-      setThresholdForm({
-        Name: '',
-        vaccine: '',
-        threshold_type: 'low_stock',
-        threshold_value: ''
-      });
-    }
-    setShowThresholdModal(true);
-  };
-
-  const getVaccineName = (vaccineId) => {
-    const vaccine = vaccines.find(v => v.Id === vaccineId);
-    return vaccine ? vaccine.Name : 'Unknown';
-  };
-
-  const groupedThresholds = thresholds.reduce((acc, threshold) => {
-    const vaccineId = threshold.vaccine?.Id || threshold.vaccine;
-    const vaccineName = getVaccineName(vaccineId);
-    
-    if (!acc[vaccineId]) {
-      acc[vaccineId] = {
-        vaccineName,
-        thresholds: []
-      };
-    }
-    
-    acc[vaccineId].thresholds.push(threshold);
-    return acc;
-  }, {});
 
   const handleReset = () => {
     setSettings({
@@ -191,7 +64,7 @@ const [loading, setLoading] = useState(false);
     toast.info('Settings reset to defaults');
   };
 
-useEffect(() => {
+  useEffect(() => {
     // Load settings from localStorage
     const savedSettings = localStorage.getItem('vaxtracker-settings');
     if (savedSettings) {
@@ -202,9 +75,6 @@ useEffect(() => {
         console.error('Error loading settings:', error);
       }
     }
-    
-    // Load thresholds data
-    loadThresholds();
   }, []);
 
   return (
@@ -215,6 +85,17 @@ useEffect(() => {
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
+          <p className="text-gray-600">Configure system preferences and facility information</p>
+        </div>
+        
+        <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <ApperIcon name="Settings" className="w-4 h-4" />
+          <span>System Configuration</span>
+        </div>
+      </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Facility Information */}
@@ -284,87 +165,6 @@ useEffect(() => {
                 min="1"
                 max="365"
               />
-            </div>
-          </FormSection>
-</Card>
-
-        {/* Vaccine Alert Thresholds */}
-        <Card className="p-6">
-          <FormSection
-            title="Vaccine Alert Thresholds"
-            description="Configure individual alert thresholds for each vaccine type"
-          >
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">
-                  Set custom low stock and expiration warning thresholds for each vaccine
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openThresholdModal()}
-                  icon="Plus"
-                >
-                  Add Threshold
-                </Button>
-              </div>
-
-              {thresholdsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : Object.keys(groupedThresholds).length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <ApperIcon name="AlertCircle" className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>No alert thresholds configured</p>
-                  <p className="text-sm">Click "Add Threshold" to create your first threshold</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {Object.entries(groupedThresholds).map(([vaccineId, group]) => (
-                    <div key={vaccineId} className="border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-900 mb-3">{group.vaccineName}</h4>
-                      <div className="space-y-2">
-                        {group.thresholds.map((threshold) => (
-                          <div key={threshold.Id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md">
-                            <div className="flex items-center space-x-3">
-                              <ApperIcon 
-                                name={threshold.threshold_type === 'low_stock' ? 'Package' : 'Calendar'} 
-                                className="w-4 h-4 text-gray-500" 
-                              />
-                              <div>
-                                <span className="text-sm font-medium text-gray-900">
-                                  {threshold.threshold_type === 'low_stock' ? 'Low Stock' : 'Expiration Warning'}
-                                </span>
-                                <span className="text-sm text-gray-600 ml-2">
-                                  {threshold.threshold_value} {threshold.threshold_type === 'low_stock' ? 'doses' : 'days'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                type="button"
-                                onClick={() => openThresholdModal(threshold)}
-                                className="text-primary hover:text-primary-dark transition-colors"
-                              >
-                                <ApperIcon name="Edit" className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteThreshold(threshold.Id)}
-                                className="text-red-600 hover:text-red-700 transition-colors"
-                              >
-                                <ApperIcon name="Trash2" className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </FormSection>
         </Card>
@@ -458,74 +258,6 @@ useEffect(() => {
           </Button>
         </div>
       </form>
-
-      {/* Threshold Modal */}
-      <Modal
-        isOpen={showThresholdModal}
-        onClose={() => setShowThresholdModal(false)}
-        title={editingThreshold ? 'Edit Alert Threshold' : 'Add Alert Threshold'}
-        size="md"
-      >
-        <form onSubmit={handleSaveThreshold} className="space-y-4">
-          <Input
-            label="Threshold Name"
-            value={thresholdForm.Name}
-            onChange={(e) => handleThresholdFormChange('Name', e.target.value)}
-            placeholder="Enter threshold name"
-            required
-          />
-
-          <Select
-            label="Vaccine"
-            value={thresholdForm.vaccine}
-            onChange={(e) => handleThresholdFormChange('vaccine', e.target.value)}
-            options={vaccines.map(vaccine => ({
-              value: vaccine.Id,
-              label: vaccine.Name
-            }))}
-            placeholder="Select vaccine"
-            required
-          />
-
-          <Select
-            label="Threshold Type"
-            value={thresholdForm.threshold_type}
-            onChange={(e) => handleThresholdFormChange('threshold_type', e.target.value)}
-            options={[
-              { value: 'low_stock', label: 'Low Stock Alert' },
-              { value: 'expiration', label: 'Expiration Warning' }
-            ]}
-            required
-          />
-
-          <Input
-            label={`Threshold Value ${thresholdForm.threshold_type === 'low_stock' ? '(doses)' : '(days)'}`}
-            type="number"
-            value={thresholdForm.threshold_value}
-            onChange={(e) => handleThresholdFormChange('threshold_value', e.target.value)}
-            placeholder={thresholdForm.threshold_type === 'low_stock' ? 'Enter minimum stock level' : 'Enter days before expiration'}
-            min="1"
-            required
-          />
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowThresholdModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              loading={loading}
-              icon="Save"
-            >
-              {editingThreshold ? 'Update' : 'Create'} Threshold
-            </Button>
-          </div>
-        </form>
-      </Modal>
     </motion.div>
   );
 };
