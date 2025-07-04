@@ -54,7 +54,7 @@ const Reconciliation = () => {
 
 const getVaccineName = (vaccineId) => {
     const vaccine = vaccines.find(v => v.Id === vaccineId);
-    return vaccine ? vaccine.name : 'Unknown';
+    return vaccine ? (vaccine.Name || vaccine.name) : 'Unknown';
   };
 
   const getVaccineGenericName = (vaccineId) => {

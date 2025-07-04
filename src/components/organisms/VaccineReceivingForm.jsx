@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
-import Input from '@/components/atoms/Input';
-import Select from '@/components/atoms/Select';
-import Button from '@/components/atoms/Button';
-import FormSection from '@/components/molecules/FormSection';
-import Card from '@/components/atoms/Card';
-import { vaccineService } from '@/services/api/vaccineService';
-import { vaccineLotService } from '@/services/api/vaccineLotService';
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { motion } from "framer-motion";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import Input from "@/components/atoms/Input";
+import FormSection from "@/components/molecules/FormSection";
+import { vaccineLotService } from "@/services/api/vaccineLotService";
+import { vaccineService } from "@/services/api/vaccineService";
 
 const VaccineReceivingForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -23,7 +23,7 @@ const VaccineReceivingForm = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [vaccines, setVaccines] = useState([]);
 
-  useState(() => {
+useEffect(() => {
     const loadVaccines = async () => {
       try {
         const data = await vaccineService.getAll();
@@ -102,9 +102,9 @@ const VaccineReceivingForm = ({ onSuccess }) => {
     }
   };
 
-  const vaccineOptions = vaccines.map(vaccine => ({
+const vaccineOptions = vaccines.map(vaccine => ({
     value: vaccine.Id,
-    label: `${vaccine.name} - ${vaccine.manufacturer}`
+    label: `${vaccine.Name || vaccine.name} - ${vaccine.manufacturer}`
   }));
 
   return (

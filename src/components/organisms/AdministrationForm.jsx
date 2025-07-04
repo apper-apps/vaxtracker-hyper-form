@@ -115,7 +115,7 @@ const loadData = async () => {
       return 'Vaccine Not Found';
     }
     
-    return vaccine.name || 'Unnamed Vaccine';
+return vaccine.Name || vaccine.name || 'Unnamed Vaccine';
   }, [vaccines, vaccinesLoading]);
 
 // Memoized vaccine abbreviation lookup function

@@ -103,14 +103,14 @@ const getVaccineName = (vaccineId) => {
     if (!vaccine) {
       console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory`);
       console.error('Available vaccine IDs:', vaccines.map(v => v.Id).sort((a, b) => a - b));
-      console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, Name: v.Name || v.name })));
       console.error('This indicates either:');
       console.error('1. The vaccine was deleted after the lot was created');
       console.error('2. The lot was created with an incorrect vaccine ID');
       console.error('3. There is a data synchronization issue between vaccines and lots');
       return `Vaccine ID ${parsedId} Not Found`;
     }
-    return vaccine.name || 'Unnamed Vaccine';
+    return vaccine.Name || vaccine.name || 'Unnamed Vaccine';
   };
 
 const getVaccineAbbreviation = (vaccineId) => {
