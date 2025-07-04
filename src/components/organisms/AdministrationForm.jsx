@@ -223,7 +223,7 @@ sortFn: (a, b) => {
 render: (lot) => (
         <div>
           <div className="font-medium text-gray-900">
-            {lot && lot.vaccineId !== undefined ? getVaccineName(lot.vaccineId) : 'Missing Vaccine Data'}
+            {getVaccineName(lot.vaccineId)}
           </div>
         </div>
       )
@@ -233,7 +233,7 @@ render: (lot) => (
       label: 'Generic Name',
 render: (lot) => (
         <span className="text-gray-600">
-          {lot && lot.vaccineId !== undefined ? getVaccineAbbreviation(lot.vaccineId) : 'N/A'}
+          {getVaccineAbbreviation(lot.vaccineId)}
         </span>
       ),
       sortable: true,
