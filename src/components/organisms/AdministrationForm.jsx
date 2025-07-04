@@ -36,27 +36,34 @@ const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
+      setVaccinesLoading(true);
       
-      // Load vaccines first
+      // Load vaccines first and ensure they're fully loaded
       console.log('Loading vaccines...');
       const vaccinesData = await vaccineService.getAll();
       console.log(`Loaded ${vaccinesData.length} vaccines`);
       setVaccines(vaccinesData);
       setVaccinesLoading(false);
       
-      // Validate and repair data integrity before loading lots
-      const integrityResult = await vaccineLotService.validateDataIntegrity();
-      if (integrityResult.repaired > 0) {
-        console.log(`Data integrity check: ${integrityResult.repaired} lots repaired`);
-        toast.info(`Data integrity check: ${integrityResult.repaired} lots repaired`);
+      // Only proceed with lots after vaccines are confirmed loaded
+      if (vaccinesData.length > 0) {
+        // Validate and repair data integrity before loading lots
+        const integrityResult = await vaccineLotService.validateDataIntegrity();
+        if (integrityResult.repaired > 0) {
+          console.log(`Data integrity check: ${integrityResult.repaired} lots repaired`);
+          toast.info(`Data integrity check: ${integrityResult.repaired} lots repaired`);
+        }
+        
+        // Load available lots (service handles filtering)
+        console.log('Loading vaccine lots...');
+        const availableLots = await vaccineLotService.getAvailableLots();
+        console.log(`Loaded ${availableLots.length} available lots`);
+        
+        setVaccineLots(availableLots);
+      } else {
+        console.warn('No vaccines loaded, skipping lot loading');
+        setVaccineLots([]);
       }
-      
-      // Load available lots (service handles filtering)
-      console.log('Loading vaccine lots...');
-      const availableLots = await vaccineLotService.getAvailableLots();
-      console.log(`Loaded ${availableLots.length} available lots`);
-      
-      setVaccineLots(availableLots);
       
     } catch (error) {
       console.error('Error loading data:', error);
@@ -355,7 +362,7 @@ Record
     return <Error message={error} onRetry={loadData} />;
   }
 
-if (vaccinesLoading) {
+if (vaccinesLoading || vaccines.length === 0) {
     return <Loading message="Loading vaccine information..." />;
   }
   if (vaccineLots.length === 0) {
