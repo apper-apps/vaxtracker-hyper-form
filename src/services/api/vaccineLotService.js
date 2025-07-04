@@ -14,12 +14,28 @@ class VaccineLotService {
     return JSON.parse(JSON.stringify(this.vaccineLots));
   }
 
-  async getById(id) {
+async getById(id) {
     await new Promise(resolve => setTimeout(resolve, 200));
-    const lot = this.vaccineLots.find(l => l.Id === id);
-    if (!lot) {
-      throw new Error('Vaccine lot not found');
+    
+    // Validate ID parameter
+    const parsedId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (isNaN(parsedId) || parsedId <= 0) {
+      console.error(`Invalid lot ID provided to getById: ${id} (type: ${typeof id})`);
+      throw new Error(`Invalid lot ID: ${id}`);
     }
+    
+    const lot = this.vaccineLots.find(l => l.Id === parsedId);
+    if (!lot) {
+      console.error(`Vaccine lot not found for ID: ${id} (parsed: ${parsedId})`);
+      console.error('Available lot IDs:', this.vaccineLots.map(l => l.Id));
+      throw new Error(`Vaccine lot not found for ID: ${parsedId}`);
+    }
+    
+    // Validate lot data integrity
+    if (lot.vaccineId === null || lot.vaccineId === undefined) {
+      console.warn(`Lot ${lot.Id} has null/undefined vaccine ID - data integrity issue`);
+    }
+    
     return { ...lot };
   }
 
@@ -69,18 +85,31 @@ class VaccineLotService {
 async getByVaccineId(vaccineId) {
     await new Promise(resolve => setTimeout(resolve, 250));
     
+    if (vaccineId === null || vaccineId === undefined) {
+      console.warn('getByVaccineId called with null/undefined vaccine ID');
+      return [];
+    }
+    
     // Handle both string and integer vaccine IDs for data integrity
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
     if (isNaN(parsedId) || parsedId <= 0) {
-      console.warn(`Invalid vaccine ID provided to getByVaccineId: ${vaccineId}`);
+      console.warn(`Invalid vaccine ID provided to getByVaccineId: ${vaccineId} (type: ${typeof vaccineId})`);
+      console.warn('Available vaccine IDs in lots:', [...new Set(this.vaccineLots.map(lot => lot.vaccineId))]);
       return [];
     }
     
-    return this.vaccineLots.filter(lot => {
+    const matchingLots = this.vaccineLots.filter(lot => {
+      if (lot.vaccineId === null || lot.vaccineId === undefined) {
+        console.warn(`Lot ${lot.Id} has null/undefined vaccine ID`);
+        return false;
+      }
       const lotVaccineId = typeof lot.vaccineId === 'string' ? parseInt(lot.vaccineId, 10) : lot.vaccineId;
       return lotVaccineId === parsedId;
     });
+    
+    console.log(`Found ${matchingLots.length} lots for vaccine ID ${parsedId}`);
+    return matchingLots;
   }
 
   async getAvailableLots() {

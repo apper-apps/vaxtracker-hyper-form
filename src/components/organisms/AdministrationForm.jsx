@@ -52,7 +52,10 @@ const AdministrationForm = ({ onSuccess }) => {
 
 const getVaccineName = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (vaccineId === null || vaccineId === undefined) return 'No Vaccine ID';
+    if (vaccineId === null || vaccineId === undefined) {
+      console.warn('getVaccineName called with null/undefined vaccine ID');
+      return 'No Vaccine ID';
+    }
     
     // Handle both string and integer vaccine IDs with comprehensive validation
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
@@ -60,13 +63,15 @@ const getVaccineName = (vaccineId) => {
     // Validate parsing was successful and ID is valid
     if (isNaN(parsedId) || parsedId <= 0) {
       console.error(`Invalid vaccine ID format in administration: ${vaccineId} (type: ${typeof vaccineId})`);
+      console.error('Available vaccine IDs:', vaccines.map(v => v.Id));
       return 'Invalid Vaccine ID';
     }
     
     const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form. Available vaccines:`, vaccines.map(v => ({ Id: v.Id, name: v.name })));
-      console.error('Vaccine lots with missing vaccines may need data correction');
+      console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form.`);
+      console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.error('This may indicate a data integrity issue between vaccine lots and vaccine master data');
       return `Vaccine ID ${parsedId} Not Found`;
     }
     return vaccine.name || 'Unnamed Vaccine';
@@ -74,7 +79,10 @@ const getVaccineName = (vaccineId) => {
 
 const getVaccineAbbreviation = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (vaccineId === null || vaccineId === undefined) return 'N/A';
+    if (vaccineId === null || vaccineId === undefined) {
+      console.warn('getVaccineAbbreviation called with null/undefined vaccine ID');
+      return 'N/A';
+    }
     
     // Handle both string and integer vaccine IDs with comprehensive validation
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
@@ -82,12 +90,15 @@ const getVaccineAbbreviation = (vaccineId) => {
     // Validate parsing was successful and ID is valid
     if (isNaN(parsedId) || parsedId <= 0) {
       console.error(`Invalid vaccine ID format for abbreviation in administration: ${vaccineId} (type: ${typeof vaccineId})`);
+      console.error('Available vaccine IDs:', vaccines.map(v => v.Id));
       return 'N/A';
     }
     
     const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
       console.error(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form`);
+      console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, abbreviation: v.abbreviation })));
+      console.error('This may indicate a data integrity issue between vaccine lots and vaccine master data');
       return 'N/A';
     }
     return vaccine.abbreviation || 'N/A';

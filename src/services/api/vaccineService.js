@@ -14,19 +14,33 @@ class VaccineService {
 async getById(id) {
     await new Promise(resolve => setTimeout(resolve, 200));
     
+    if (id === null || id === undefined) {
+      console.error('getById called with null/undefined vaccine ID');
+      throw new Error('Vaccine ID cannot be null or undefined');
+    }
+    
     // Handle both string and integer IDs with validation
     const parsedId = typeof id === 'string' ? parseInt(id, 10) : id;
     
     if (isNaN(parsedId) || parsedId <= 0) {
       console.error(`Invalid vaccine ID provided to getById: ${id} (type: ${typeof id})`);
+      console.error('Available vaccine IDs:', this.vaccines.map(v => v.Id));
       throw new Error(`Invalid vaccine ID: ${id}`);
     }
     
     const vaccine = this.vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      console.error(`Vaccine not found for ID: ${id} (parsed: ${parsedId}). Available vaccine IDs:`, this.vaccines.map(v => v.Id));
+      console.error(`Vaccine not found for ID: ${id} (parsed: ${parsedId})`);
+      console.error('Available vaccines:', this.vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.error('This may indicate a reference to a deleted or non-existent vaccine');
       throw new Error(`Vaccine not found for ID: ${parsedId}`);
     }
+    
+    // Validate vaccine data integrity
+    if (!vaccine.name || !vaccine.abbreviation) {
+      console.warn(`Vaccine ${vaccine.Id} has missing name or abbreviation - data integrity issue`);
+    }
+    
     return { ...vaccine };
   }
 
