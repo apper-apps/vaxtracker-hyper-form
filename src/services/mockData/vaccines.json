@@ -1,70 +1,70 @@
 [
   {
     "Id": 1,
-    "name": "Pfizer-BioNTech COVID-19",
-    "family": "COVID-19",
-    "manufacturer": "Pfizer",
-    "dosesPerVial": 6,
-    "minStock": 50,
-    "storageTemp": "-80°C to -60°C"
+    "name": "Gardasil PFS HPV",
+    "family": "HPV",
+    "manufacturer": "Merck",
+    "dosesPerVial": 1,
+    "minStock": 20,
+    "storageTemp": "2°C to 8°C"
   },
   {
     "Id": 2,
-    "name": "Moderna COVID-19",
-    "family": "COVID-19",
-    "manufacturer": "Moderna",
-    "dosesPerVial": 10,
+    "name": "Vaxelis PFS DTaP-IPV-Hib-Hep B",
+    "family": "DTaP-IPV-Hib-Hep B",
+    "manufacturer": "Merck",
+    "dosesPerVial": 1,
     "minStock": 30,
-    "storageTemp": "-25°C to -15°C"
+    "storageTemp": "2°C to 8°C"
   },
   {
     "Id": 3,
-    "name": "Johnson & Johnson COVID-19",
-    "family": "COVID-19",
-    "manufacturer": "Johnson & Johnson",
-    "dosesPerVial": 5,
+    "name": "IPOL MDV IPV",
+    "family": "IPV",
+    "manufacturer": "Sanofi Pasteur",
+    "dosesPerVial": 10,
     "minStock": 25,
     "storageTemp": "2°C to 8°C"
   },
   {
     "Id": 4,
-    "name": "Fluzone Quadrivalent",
-    "family": "Influenza",
+    "name": "Pentacel SDV DTaP-IPV-Hib",
+    "family": "DTaP-IPV-Hib",
     "manufacturer": "Sanofi Pasteur",
-    "dosesPerVial": 10,
-    "minStock": 100,
+    "dosesPerVial": 1,
+    "minStock": 20,
     "storageTemp": "2°C to 8°C"
   },
   {
     "Id": 5,
-    "name": "Pneumovax 23",
-    "family": "Pneumococcal",
-    "manufacturer": "Merck",
-    "dosesPerVial": 1,
-    "minStock": 40,
-    "storageTemp": "2°C to 8°C"
-  },
-  {
-    "Id": 6,
-    "name": "Tdap (Boostrix)",
-    "family": "Tetanus/Diphtheria/Pertussis",
-    "manufacturer": "GlaxoSmithKline",
+    "name": "ActHib SDV Hib",
+    "family": "Hib",
+    "manufacturer": "Sanofi Pasteur",
     "dosesPerVial": 1,
     "minStock": 30,
     "storageTemp": "2°C to 8°C"
   },
   {
+    "Id": 6,
+    "name": "Daptacel SDV DTaP",
+    "family": "DTaP",
+    "manufacturer": "Sanofi Pasteur",
+    "dosesPerVial": 1,
+    "minStock": 25,
+    "storageTemp": "2°C to 8°C"
+  },
+  {
     "Id": 7,
-    "name": "MMR II",
-    "family": "Measles/Mumps/Rubella",
+    "name": "MMR II SDV MMR",
+    "family": "MMR",
     "manufacturer": "Merck",
-    "dosesPerVial": 10,
+    "dosesPerVial": 1,
     "minStock": 20,
     "storageTemp": "2°C to 8°C"
   },
   {
     "Id": 8,
-    "name": "Varicella (Varivax)",
+    "name": "Varivax SDV Varicella",
     "family": "Varicella",
     "manufacturer": "Merck",
     "dosesPerVial": 1,

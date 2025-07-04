@@ -280,10 +280,10 @@
     "vaccineId": 7,
     "lotNumber": "Y014095",
     "expirationDate": "2026-09-19",
-    "quantityReceived": 4,
-    "quantityOnHand": 2,
+    "quantityReceived": 3,
+    "quantityOnHand": 1,
     "dateReceived": "2024-06-05T15:45:00Z",
-    "passedInspection": 4,
+    "passedInspection": 3,
     "failedInspection": 0,
     "discrepancyReason": ""
   }
