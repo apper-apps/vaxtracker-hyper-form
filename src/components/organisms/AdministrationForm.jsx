@@ -52,7 +52,7 @@ const AdministrationForm = ({ onSuccess }) => {
 
 const getVaccineName = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (!vaccineId && vaccineId !== 0) return 'Unknown';
+    if (vaccineId === null || vaccineId === undefined) return 'No Vaccine ID';
     
     // Handle both string and integer vaccine IDs
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
@@ -60,20 +60,20 @@ const getVaccineName = (vaccineId) => {
     // Check if parsing was successful
     if (isNaN(parsedId)) {
       console.warn(`Invalid vaccine ID format: ${vaccineId}`);
-      return 'Invalid ID';
+      return 'Invalid Vaccine ID';
     }
     
     const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
       console.warn(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}). Available vaccines:`, vaccines.map(v => ({ Id: v.Id, name: v.name })));
-      return 'Unknown Vaccine';
+      return `Vaccine ID ${parsedId} Not Found`;
     }
     return vaccine.name || 'Unnamed Vaccine';
   };
 
-  const getVaccineAbbreviation = (vaccineId) => {
+const getVaccineAbbreviation = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (!vaccineId && vaccineId !== 0) return 'N/A';
+    if (vaccineId === null || vaccineId === undefined) return 'N/A';
     
     // Handle both string and integer vaccine IDs
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
@@ -208,10 +208,10 @@ sortFn: (a, b) => {
         const bName = getVaccineName(b.vaccineId) || '';
         return aName.localeCompare(bName);
       },
-      render: (lot) => (
+render: (lot) => (
         <div>
           <div className="font-medium text-gray-900">
-            {lot && lot.vaccineId ? getVaccineName(lot.vaccineId) : 'Unknown Vaccine'}
+            {lot && lot.vaccineId !== undefined ? getVaccineName(lot.vaccineId) : 'Missing Vaccine Data'}
           </div>
         </div>
       )
@@ -221,7 +221,7 @@ sortFn: (a, b) => {
       label: 'Generic Name',
 render: (lot) => (
         <span className="text-gray-600">
-          {lot && lot.vaccineId ? getVaccineAbbreviation(lot.vaccineId) : 'N/A'}
+          {lot && lot.vaccineId !== undefined ? getVaccineAbbreviation(lot.vaccineId) : 'N/A'}
         </span>
       ),
       sortable: true,
