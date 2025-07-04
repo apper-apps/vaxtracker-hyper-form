@@ -80,6 +80,11 @@ const loadData = async () => {
 
 // Memoized vaccine name lookup function
   const getVaccineName = useCallback((vaccineId) => {
+    // Return loading state if vaccines are still being loaded
+    if (vaccines.length === 0 && vaccinesLoading) {
+      return 'Loading...';
+    }
+    
     // Handle null/undefined vaccine IDs
     if (vaccineId === null || vaccineId === undefined) {
       return 'Unknown Vaccine (No ID)';
@@ -100,10 +105,15 @@ const loadData = async () => {
     }
     
     return vaccine.name || 'Unnamed Vaccine';
-  }, [vaccines]);
+  }, [vaccines, vaccinesLoading]);
 
 // Memoized vaccine abbreviation lookup function
   const getVaccineAbbreviation = useCallback((vaccineId) => {
+    // Return loading state if vaccines are still being loaded
+    if (vaccines.length === 0 && vaccinesLoading) {
+      return '...';
+    }
+    
     // Handle null/undefined vaccine IDs
     if (vaccineId === null || vaccineId === undefined) {
       return 'N/A';
@@ -124,7 +134,7 @@ const loadData = async () => {
     }
     
     return vaccine.abbreviation || 'N/A';
-  }, [vaccines]);
+  }, [vaccines, vaccinesLoading]);
 
 
 
