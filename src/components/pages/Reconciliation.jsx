@@ -51,9 +51,14 @@ const Reconciliation = () => {
     }
   };
 
-  const getVaccineName = (vaccineId) => {
+const getVaccineName = (vaccineId) => {
     const vaccine = vaccines.find(v => v.Id === vaccineId);
-    return vaccine ? vaccine.name : 'Unknown';
+    return vaccine ? vaccine.family : 'Unknown';
+  };
+
+  const getVaccineGenericName = (vaccineId) => {
+    const vaccine = vaccines.find(v => v.Id === vaccineId);
+    return vaccine ? vaccine.abbreviation : 'Unknown';
   };
 
   const handleAdjustment = (lot) => {
@@ -210,20 +215,38 @@ const Reconciliation = () => {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+<table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Vaccine
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                    <div className="flex items-center space-x-1">
+                      <span>Vaccine</span>
+                      <ApperIcon name="ChevronsUpDown" className="w-4 h-4" />
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Lot Number
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                    <div className="flex items-center space-x-1">
+                      <span>Generic Name</span>
+                      <ApperIcon name="ChevronsUpDown" className="w-4 h-4" />
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Expiration
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                    <div className="flex items-center space-x-1">
+                      <span>Lot Number</span>
+                      <ApperIcon name="ChevronsUpDown" className="w-4 h-4" />
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    System Count
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                    <div className="flex items-center space-x-1">
+                      <span>Expiration</span>
+                      <ApperIcon name="ChevronsUpDown" className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                    <div className="flex items-center space-x-1">
+                      <span>System Count</span>
+                      <ApperIcon name="ChevronsUpDown" className="w-4 h-4" />
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -231,10 +254,13 @@ const Reconciliation = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {vaccineLots.map((lot) => (
+{vaccineLots.map((lot) => (
                   <tr key={lot.Id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">{getVaccineName(lot.vaccineId)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="font-medium text-gray-700">{getVaccineGenericName(lot.vaccineId)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-mono text-sm">{lot.lotNumber}</span>

@@ -152,14 +152,14 @@ const columns = [
       label: 'Vaccine',
       render: (value, lot) => (
         <div>
-          <div className="font-medium text-gray-900">{getVaccineName(lot.vaccineId)}</div>
+          <div className="font-medium text-gray-900">{getVaccineFamily(lot.vaccineId)}</div>
           <div className="text-sm text-gray-500">{getVaccineFamily(lot.vaccineId)}</div>
         </div>
       )
     },
     {
-      key: 'abbreviation',
-      label: 'Abbreviation',
+      key: 'genericName',
+      label: 'Generic Name',
       render: (value, lot) => (
         <span className="font-medium text-gray-700">{getVaccineAbbreviation(lot.vaccineId)}</span>
       ),
@@ -236,7 +236,7 @@ const columns = [
 <SearchBar
         onSearch={setSearchTerm}
         onFilter={setActiveFilter}
-        placeholder="Search vaccines, abbreviations, or lot numbers..."
+        placeholder="Search vaccines, generic names, or lot numbers..."
         filters={filters}
       />
 
