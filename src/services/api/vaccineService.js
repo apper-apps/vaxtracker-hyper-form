@@ -1,21 +1,33 @@
 import { toast } from 'react-toastify';
 
-class VaccineService {
-  constructor() {
-    // Initialize ApperClient for database operations
-    const { ApperClient } = window.ApperSDK;
-    this.apperClient = new ApperClient({
-      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-    });
-    this.tableName = 'vaccine';
-  }
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const vaccineService = {
   async getAll() {
     try {
+      await delay(300);
+      
+      // Check if SDK is available
+      if (!window.ApperSDK) {
+        throw new Error('Apper SDK not loaded');
+      }
+      
+      // Initialize ApperClient within the method
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
       const params = {
         fields: [
           { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "Owner" } },
+          { field: { Name: "CreatedOn" } },
+          { field: { Name: "CreatedBy" } },
+          { field: { Name: "ModifiedOn" } },
+          { field: { Name: "ModifiedBy" } },
           { field: { Name: "abbreviation" } },
           { field: { Name: "family" } },
           { field: { Name: "manufacturer" } },
@@ -24,13 +36,7 @@ class VaccineService {
           { field: { Name: "storage_temp" } },
           { field: { Name: "vaccineId" } },
           { field: { Name: "commercialName" } },
-          { field: { Name: "genericName" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "Owner" } },
-          { field: { Name: "CreatedOn" } },
-          { field: { Name: "CreatedBy" } },
-          { field: { Name: "ModifiedOn" } },
-          { field: { Name: "ModifiedBy" } }
+          { field: { Name: "genericName" } }
         ],
         orderBy: [
           {
@@ -44,7 +50,7 @@ class VaccineService {
         }
       };
 
-      const response = await this.apperClient.fetchRecords(this.tableName, params);
+      const response = await apperClient.fetchRecords('vaccine', params);
       
       if (!response.success) {
         console.error(response.message);
@@ -58,13 +64,33 @@ class VaccineService {
       toast.error("Failed to fetch vaccines");
       return [];
     }
-  }
+  },
 
   async getById(id) {
     try {
+      await delay(200);
+      
+      // Check if SDK is available
+      if (!window.ApperSDK) {
+        throw new Error('Apper SDK not loaded');
+      }
+      
+      // Initialize ApperClient within the method
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
       const params = {
         fields: [
           { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "Owner" } },
+          { field: { Name: "CreatedOn" } },
+          { field: { Name: "CreatedBy" } },
+          { field: { Name: "ModifiedOn" } },
+          { field: { Name: "ModifiedBy" } },
           { field: { Name: "abbreviation" } },
           { field: { Name: "family" } },
           { field: { Name: "manufacturer" } },
@@ -73,17 +99,11 @@ class VaccineService {
           { field: { Name: "storage_temp" } },
           { field: { Name: "vaccineId" } },
           { field: { Name: "commercialName" } },
-          { field: { Name: "genericName" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "Owner" } },
-          { field: { Name: "CreatedOn" } },
-          { field: { Name: "CreatedBy" } },
-          { field: { Name: "ModifiedOn" } },
-          { field: { Name: "ModifiedBy" } }
+          { field: { Name: "genericName" } }
         ]
       };
 
-      const response = await this.apperClient.getRecordById(this.tableName, id, params);
+      const response = await apperClient.getRecordById('vaccine', id, params);
       
       if (!response.success) {
         console.error(response.message);
@@ -94,34 +114,49 @@ class VaccineService {
       return response.data;
     } catch (error) {
       console.error(`Error fetching vaccine with ID ${id}:`, error);
-      toast.error("Failed to fetch vaccine details");
+      toast.error("Failed to fetch vaccine");
       return null;
     }
-  }
+  },
 
   async create(vaccineData) {
     try {
-      // Only include Updateable fields for create operation
-      const params = {
-        records: [{
-          Name: vaccineData.Name || "",
-          abbreviation: vaccineData.abbreviation || "",
-          family: vaccineData.family || "",
-          manufacturer: vaccineData.manufacturer || "",
-          doses_per_vial: vaccineData.doses_per_vial || 0,
-          min_stock: vaccineData.min_stock || 0,
-          storage_temp: vaccineData.storage_temp || "",
-          vaccineId: vaccineData.vaccineId || "",
-          commercialName: vaccineData.commercialName || "",
-          genericName: vaccineData.genericName || "",
-          Tags: vaccineData.Tags || "",
-          Owner: vaccineData.Owner || null
-        }]
+      await delay(300);
+      
+      // Check if SDK is available
+      if (!window.ApperSDK) {
+        throw new Error('Apper SDK not loaded');
+      }
+      
+      // Initialize ApperClient within the method
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      // Only include Updateable fields
+      const updateableData = {
+        Name: vaccineData.Name || '',
+        Tags: vaccineData.Tags || '',
+        Owner: vaccineData.Owner || null,
+        abbreviation: vaccineData.abbreviation || '',
+        family: vaccineData.family || '',
+        manufacturer: vaccineData.manufacturer || '',
+        doses_per_vial: vaccineData.doses_per_vial || 0,
+        min_stock: vaccineData.min_stock || 0,
+        storage_temp: vaccineData.storage_temp || '',
+        vaccineId: vaccineData.vaccineId || '',
+        commercialName: vaccineData.commercialName || '',
+        genericName: vaccineData.genericName || ''
       };
 
-      const response = await this.apperClient.createRecord(this.tableName, params);
-      
-      if (!response.success) {
+      const params = {
+        records: [updateableData]
+      };
+
+      const response = await apperClient.createRecord('vaccine', params);
+if (!response.success) {
         console.error(response.message);
         toast.error(response.message);
         return null;
@@ -132,7 +167,7 @@ class VaccineService {
         const failedRecords = response.results.filter(result => !result.success);
         
         if (failedRecords.length > 0) {
-          console.error(`Failed to create ${failedRecords.length} vaccine records:${JSON.stringify(failedRecords)}`);
+          console.error(`Failed to create ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
           
           failedRecords.forEach(record => {
             record.errors?.forEach(error => {
@@ -143,7 +178,7 @@ class VaccineService {
         }
         
         if (successfulRecords.length > 0) {
-          toast.success("Vaccine created successfully");
+          toast.success('Vaccine created successfully');
           return successfulRecords[0].data;
         }
       }
@@ -154,30 +189,46 @@ class VaccineService {
       toast.error("Failed to create vaccine");
       return null;
     }
-  }
+  },
 
   async update(id, vaccineData) {
     try {
-      // Only include Updateable fields for update operation
-      const params = {
-        records: [{
-          Id: id,
-          Name: vaccineData.Name,
-          abbreviation: vaccineData.abbreviation,
-          family: vaccineData.family,
-          manufacturer: vaccineData.manufacturer,
-          doses_per_vial: vaccineData.doses_per_vial,
-          min_stock: vaccineData.min_stock,
-          storage_temp: vaccineData.storage_temp,
-          vaccineId: vaccineData.vaccineId,
-          commercialName: vaccineData.commercialName,
-          genericName: vaccineData.genericName,
-          Tags: vaccineData.Tags,
-          Owner: vaccineData.Owner
-        }]
+      await delay(300);
+      
+      // Check if SDK is available
+      if (!window.ApperSDK) {
+        throw new Error('Apper SDK not loaded');
+      }
+      
+      // Initialize ApperClient within the method
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      // Only include Updateable fields plus Id
+      const updateableData = {
+        Id: id,
+        Name: vaccineData.Name || '',
+        Tags: vaccineData.Tags || '',
+        Owner: vaccineData.Owner || null,
+        abbreviation: vaccineData.abbreviation || '',
+        family: vaccineData.family || '',
+        manufacturer: vaccineData.manufacturer || '',
+        doses_per_vial: vaccineData.doses_per_vial || 0,
+        min_stock: vaccineData.min_stock || 0,
+        storage_temp: vaccineData.storage_temp || '',
+        vaccineId: vaccineData.vaccineId || '',
+        commercialName: vaccineData.commercialName || '',
+        genericName: vaccineData.genericName || ''
       };
 
-      const response = await this.apperClient.updateRecord(this.tableName, params);
+      const params = {
+        records: [updateableData]
+      };
+
+      const response = await apperClient.updateRecord('vaccine', params);
       
       if (!response.success) {
         console.error(response.message);
@@ -190,7 +241,7 @@ class VaccineService {
         const failedUpdates = response.results.filter(result => !result.success);
         
         if (failedUpdates.length > 0) {
-          console.error(`Failed to update ${failedUpdates.length} vaccine records:${JSON.stringify(failedUpdates)}`);
+          console.error(`Failed to update ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
           
           failedUpdates.forEach(record => {
             record.errors?.forEach(error => {
@@ -201,26 +252,40 @@ class VaccineService {
         }
         
         if (successfulUpdates.length > 0) {
-          toast.success("Vaccine updated successfully");
+          toast.success('Vaccine updated successfully');
           return successfulUpdates[0].data;
         }
       }
       
       return null;
-    } catch (error) {
-      console.error("Error updating vaccine:", error);
+} catch (error) {
+      console.error(`Error updating vaccine with ID ${id}:`, error);
       toast.error("Failed to update vaccine");
       return null;
     }
-  }
+  },
 
-  async delete(id) {
+  async delete(recordIds) {
     try {
+      await delay(300);
+      
+      // Check if SDK is available
+      if (!window.ApperSDK) {
+        throw new Error('Apper SDK not loaded');
+      }
+      
+      // Initialize ApperClient within the method
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
       const params = {
-        RecordIds: [id]
+        RecordIds: Array.isArray(recordIds) ? recordIds : [recordIds]
       };
 
-      const response = await this.apperClient.deleteRecord(this.tableName, params);
+      const response = await apperClient.deleteRecord('vaccine', params);
       
       if (!response.success) {
         console.error(response.message);
@@ -233,7 +298,7 @@ class VaccineService {
         const failedDeletions = response.results.filter(result => !result.success);
         
         if (failedDeletions.length > 0) {
-          console.error(`Failed to delete ${failedDeletions.length} vaccine records:${JSON.stringify(failedDeletions)}`);
+          console.error(`Failed to delete ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
           
           failedDeletions.forEach(record => {
             if (record.message) toast.error(record.message);
@@ -241,18 +306,18 @@ class VaccineService {
         }
         
         if (successfulDeletions.length > 0) {
-          toast.success("Vaccine deleted successfully");
-          return true;
+          toast.success(`Successfully deleted ${successfulDeletions.length} vaccine(s)`);
         }
-      }
+        
+        return successfulDeletions.length === params.RecordIds.length;
+}
       
       return false;
     } catch (error) {
-      console.error("Error deleting vaccine:", error);
-      toast.error("Failed to delete vaccine");
+      console.error("Error deleting vaccines:", error);
+      toast.error("Failed to delete vaccines");
       return false;
     }
   }
-}
-
-export const vaccineService = new VaccineService();
+};
+export default vaccineService;
