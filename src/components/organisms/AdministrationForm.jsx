@@ -52,26 +52,44 @@ const AdministrationForm = ({ onSuccess }) => {
 
 const getVaccineName = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (!vaccineId) return 'Unknown';
+    if (!vaccineId && vaccineId !== 0) return 'Unknown';
     
-    const vaccine = vaccines.find(v => v.Id === parseInt(vaccineId));
+    // Handle both string and integer vaccine IDs
+    const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
+    
+    // Check if parsing was successful
+    if (isNaN(parsedId)) {
+      console.warn(`Invalid vaccine ID format: ${vaccineId}`);
+      return 'Invalid ID';
+    }
+    
+    const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      console.warn(`Vaccine not found for ID: ${vaccineId}. Available vaccines:`, vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.warn(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}). Available vaccines:`, vaccines.map(v => ({ Id: v.Id, name: v.name })));
       return 'Unknown Vaccine';
     }
-    return vaccine.name;
+    return vaccine.name || 'Unnamed Vaccine';
   };
 
   const getVaccineAbbreviation = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (!vaccineId) return 'N/A';
+    if (!vaccineId && vaccineId !== 0) return 'N/A';
     
-    const vaccine = vaccines.find(v => v.Id === parseInt(vaccineId));
-    if (!vaccine) {
-      console.warn(`Vaccine abbreviation not found for ID: ${vaccineId}`);
+    // Handle both string and integer vaccine IDs
+    const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
+    
+    // Check if parsing was successful
+    if (isNaN(parsedId)) {
+      console.warn(`Invalid vaccine ID format for abbreviation: ${vaccineId}`);
       return 'N/A';
     }
-    return vaccine.abbreviation;
+    
+    const vaccine = vaccines.find(v => v.Id === parsedId);
+    if (!vaccine) {
+      console.warn(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId})`);
+      return 'N/A';
+    }
+    return vaccine.abbreviation || 'N/A';
   };
 
   const getExpirationStatus = (lot) => {
