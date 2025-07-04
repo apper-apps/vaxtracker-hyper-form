@@ -1,0 +1,26 @@
+[
+  {
+    "Id": 1,
+    "lotId": 2,
+    "quantity": 5,
+    "reason": "temperature-exposure",
+    "details": "Refrigerator malfunction for 2 hours during weekend",
+    "dateReported": "2024-01-25T16:00:00Z"
+  },
+  {
+    "Id": 2,
+    "lotId": 3,
+    "quantity": 2,
+    "reason": "damaged-vials",
+    "details": "Vials cracked during transport",
+    "dateReported": "2024-02-02T10:30:00Z"
+  },
+  {
+    "Id": 3,
+    "lotId": 6,
+    "quantity": 10,
+    "reason": "expiration",
+    "details": "Doses expired before administration",
+    "dateReported": "2024-03-01T09:00:00Z"
+  }
+]

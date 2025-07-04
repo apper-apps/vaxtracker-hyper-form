@@ -1,0 +1,18 @@
+[
+  {
+    "Id": 1,
+    "lotId": 1,
+    "previousQuantity": 90,
+    "adjustedQuantity": 85,
+    "reason": "physical-count",
+    "dateReconciled": "2024-03-01T00:00:00Z"
+  },
+  {
+    "Id": 2,
+    "lotId": 4,
+    "previousQuantity": 430,
+    "adjustedQuantity": 425,
+    "reason": "administration-error",
+    "dateReconciled": "2024-03-15T00:00:00Z"
+  }
+]
