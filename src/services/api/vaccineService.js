@@ -44,10 +44,19 @@ async getById(id) {
     return { ...vaccine };
   }
 
-  async create(vaccineData) {
+async create(vaccineData) {
     await new Promise(resolve => setTimeout(resolve, 400));
     
-    const newId = Math.max(...this.vaccines.map(v => v.Id)) + 1;
+    // Ensure proper ID generation accounting for pre-loaded vaccines (IDs 1-19)
+    // and any vaccines added during runtime
+    let newId;
+    if (this.vaccines.length === 0) {
+      newId = 1;
+    } else {
+      const maxId = Math.max(...this.vaccines.map(v => v.Id));
+      newId = maxId + 1;
+    }
+    
     const newVaccine = {
       Id: newId,
       ...vaccineData,
