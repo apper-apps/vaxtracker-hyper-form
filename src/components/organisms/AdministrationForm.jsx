@@ -113,6 +113,13 @@ const loadData = async () => {
 
   // Memoized vaccine name lookup function
 const getVaccineName = useCallback((vaccineId) => {
+    // Early return guard - prevent function execution with invalid data
+    if (vaccineId === null || vaccineId === undefined) {
+      console.error('getVaccineName called with null/undefined vaccine ID - this indicates a data integrity issue');
+      console.error('Current lot data may have missing vaccine references');
+      return 'Missing Vaccine Reference';
+    }
+    
     // Enhanced loading state checks with better specificity
     if (vaccinesLoading || loading) {
       console.log('getVaccineName: Still loading vaccines or data');
@@ -122,12 +129,6 @@ const getVaccineName = useCallback((vaccineId) => {
     if (!vaccines || vaccines.length === 0) {
       console.warn('getVaccineName called but no vaccines loaded yet');
       return 'Loading vaccines...';
-    }
-    
-    if (vaccineId === null || vaccineId === undefined) {
-      console.error('getVaccineName called with null/undefined vaccine ID - this indicates a data integrity issue');
-      console.error('Current lot data may have missing vaccine references');
-      return 'Missing Vaccine Reference';
     }
     
     // Handle both string and integer vaccine IDs with comprehensive validation
@@ -168,6 +169,12 @@ const getVaccineName = useCallback((vaccineId) => {
 
 // Memoized vaccine abbreviation lookup function
 const getVaccineAbbreviation = useCallback((vaccineId) => {
+    // Early return guard - prevent function execution with invalid data
+    if (vaccineId === null || vaccineId === undefined) {
+      console.error('getVaccineAbbreviation called with null/undefined vaccine ID - data integrity issue');
+      return 'N/A';
+    }
+    
     // Enhanced loading state checks with better specificity
     if (vaccinesLoading || loading) {
       console.log('getVaccineAbbreviation: Still loading vaccines or data');
@@ -177,11 +184,6 @@ const getVaccineAbbreviation = useCallback((vaccineId) => {
     if (!vaccines || vaccines.length === 0) {
       console.warn('getVaccineAbbreviation called but no vaccines loaded yet');
       return 'Loading...';
-    }
-    
-    if (vaccineId === null || vaccineId === undefined) {
-      console.error('getVaccineAbbreviation called with null/undefined vaccine ID - data integrity issue');
-      return 'N/A';
     }
     
     // Handle both string and integer vaccine IDs with comprehensive validation
