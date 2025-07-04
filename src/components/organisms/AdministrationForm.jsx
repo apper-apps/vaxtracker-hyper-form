@@ -37,6 +37,8 @@ const loadData = async () => {
       setLoading(true);
       setError(null);
       
+      // Load vaccines first and ensure they're available before processing lots
+      console.log('Loading vaccines...');
       const vaccinesData = await vaccineService.getAll();
       
       // Validate vaccine data completeness
@@ -45,8 +47,16 @@ const loadData = async () => {
         console.warn(`${vaccinesData.length - validVaccines.length} vaccines have incomplete data`);
       }
       
+      console.log(`Loaded ${validVaccines.length} valid vaccines`);
       setVaccines(validVaccines);
       setVaccinesLoading(false);
+      
+      // Ensure we have vaccines before proceeding
+      if (validVaccines.length === 0) {
+        console.error('No valid vaccines found - cannot filter lots');
+        setError('No vaccine data available. Please check vaccine configuration.');
+        return;
+      }
       
       // Validate and repair data integrity before loading lots
       const integrityResult = await vaccineLotService.validateDataIntegrity();
@@ -55,7 +65,9 @@ const loadData = async () => {
         toast.info(`Data integrity check: ${integrityResult.repaired} lots repaired`);
       }
       
+      console.log('Loading vaccine lots...');
       const lotsData = await vaccineLotService.getAvailableLots();
+      console.log(`Loaded ${lotsData.length} total lots from service`);
       
       // Filter lots to only include those with valid vaccine references
       const lotsWithValidVaccines = lotsData.filter(lot => {
@@ -68,11 +80,14 @@ const loadData = async () => {
         const vaccine = validVaccines.find(v => v.Id === lot.vaccineId);
         if (!vaccine) {
           console.warn(`Lot ${lot.Id} references non-existent vaccine ID: ${lot.vaccineId}`);
+          console.warn(`Available vaccine IDs: ${validVaccines.map(v => v.Id).join(', ')}`);
           return false;
         }
         
         return true;
       });
+      
+      console.log(`${lotsWithValidVaccines.length} lots have valid vaccine references`);
       
       if (lotsWithValidVaccines.length < lotsData.length) {
         const excludedCount = lotsData.length - lotsWithValidVaccines.length;
@@ -81,8 +96,19 @@ const loadData = async () => {
       }
       
       // Only show lots with available inventory and valid vaccine references
-      const availableLots = lotsWithValidVaccines.filter(lot => lot.quantityOnHand > 0);
-      console.log('Available lots for administration:', availableLots.length, 'with valid vaccine references');
+      const availableLots = lotsWithValidVaccines.filter(lot => {
+        const hasInventory = lot.quantityOnHand > 0;
+        if (!hasInventory) {
+          console.log(`Lot ${lot.Id} (${lot.lotNumber}) has no available inventory: ${lot.quantityOnHand}`);
+        }
+        return hasInventory;
+      });
+      
+      console.log(`Final available lots for administration: ${availableLots.length}`);
+      availableLots.forEach(lot => {
+        console.log(`- Lot ${lot.Id} (${lot.lotNumber}): ${lot.quantityOnHand} doses available`);
+      });
+      
       setVaccineLots(availableLots);
       
     } catch (error) {
