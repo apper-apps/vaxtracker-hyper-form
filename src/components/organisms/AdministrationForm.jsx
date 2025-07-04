@@ -139,15 +139,14 @@ const loadData = async () => {
       return 'Unknown Vaccine (No ID)';
     }
     
-    // Enhanced loading state checks with better specificity
-    if (vaccinesLoading || loading) {
+// Enhanced loading state checks with better specificity
+    if (vaccinesLoading) {
       return 'Loading...';
     }
     
     if (!vaccines || vaccines.length === 0) {
       return 'Loading vaccines...';
     }
-    
     // Handle both string and integer vaccine IDs with comprehensive validation
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
@@ -179,15 +178,14 @@ const loadData = async () => {
       return 'N/A';
     }
     
-    // Enhanced loading state checks with better specificity
-    if (vaccinesLoading || loading) {
+// Enhanced loading state checks with better specificity
+    if (vaccinesLoading) {
       return 'Loading...';
     }
     
     if (!vaccines || vaccines.length === 0) {
       return 'Loading...';
     }
-    
     // Handle both string and integer vaccine IDs with comprehensive validation
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
