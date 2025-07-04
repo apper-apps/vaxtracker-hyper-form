@@ -1,6 +1,4 @@
 import vaccineLotData from "@/services/mockData/vaccineLots.json";
-import React from "react";
-import Error from "@/components/ui/Error";
 import { vaccineService } from "@/services/api/vaccineService";
 class VaccineLotService {
   constructor() {
@@ -141,7 +139,7 @@ async validateDataIntegrity() {
     return null;
   }
 
-  async getAvailableLots() {
+async getAvailableLots() {
     try {
       // Ensure data integrity before returning available lots
       if (!this.dataIntegrityChecked) {
@@ -157,11 +155,11 @@ async validateDataIntegrity() {
           console.warn(`Filtering out lot ${lot.Id} with null/undefined vaccine ID`);
           return false;
         }
-}
         
         const expirationDate = new Date(lot.expirationDate);
         return lot.quantityOnHand > 0 && expirationDate > today;
       });
+    } catch (error) {
       console.error('Error getting available lots:', error);
       throw new Error('Failed to get available lots');
     }
