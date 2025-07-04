@@ -7,9 +7,9 @@ import AlertBanner from '@/components/molecules/AlertBanner';
 import Card from '@/components/atoms/Card';
 import Loading from '@/components/ui/Loading';
 import Error from '@/components/ui/Error';
-import { vaccineLotService } from '@/services/api/vaccineLotService';
-import { vaccineService } from '@/services/api/vaccineService';
-import { administrationService } from '@/services/api/administrationService';
+import vaccineLotService from '@/services/api/vaccineLotService';
+import vaccineService from '@/services/api/vaccineService';
+import administrationService from '@/services/api/administrationService';
 
 const Dashboard = () => {
   const navigate = useNavigate();
