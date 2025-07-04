@@ -91,6 +91,21 @@ export const validateQuantity = (quantity, available = null, fieldName = 'Quanti
   
   return null;
 };
+export const validateAdministeredDoses = (doses, availableQuantity, lotNumber) => {
+  if (!doses || doses.toString().trim() === '') {
+    return null; // Allow empty for no administration
+  }
+  
+  const numberError = validateNumber(doses, 'Administered doses', 1);
+  if (numberError) return numberError;
+  
+  const num = parseInt(doses);
+  if (num > availableQuantity) {
+    return `Cannot exceed available quantity (${availableQuantity}) for lot ${lotNumber}`;
+  }
+  
+  return null;
+};
 
 export const validateForm = (formData, validationRules) => {
   const errors = {};
