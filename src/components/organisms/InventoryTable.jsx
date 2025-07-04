@@ -50,14 +50,16 @@ const InventoryTable = () => {
     filterLots();
   }, [vaccineLots, searchTerm, activeFilter]);
 
-  const filterLots = () => {
+const filterLots = () => {
     let filtered = [...vaccineLots];
 
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(lot => {
         const vaccine = getVaccineName(lot.vaccineId);
+        const abbreviation = getVaccineAbbreviation(lot.vaccineId);
         return vaccine.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               abbreviation.toLowerCase().includes(searchTerm.toLowerCase()) ||
                lot.lotNumber.toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
@@ -73,9 +75,14 @@ const InventoryTable = () => {
     setFilteredLots(filtered);
   };
 
-  const getVaccineName = (vaccineId) => {
+const getVaccineName = (vaccineId) => {
     const vaccine = vaccines.find(v => v.Id === vaccineId);
     return vaccine ? vaccine.name : 'Unknown';
+  };
+
+  const getVaccineAbbreviation = (vaccineId) => {
+    const vaccine = vaccines.find(v => v.Id === vaccineId);
+    return vaccine ? vaccine.abbreviation : 'Unknown';
   };
 
   const getVaccineFamily = (vaccineId) => {
@@ -139,14 +146,16 @@ const InventoryTable = () => {
     }
   };
 
-  const columns = [
+const columns = [
     {
       key: 'vaccine',
       label: 'Vaccine',
       render: (value, lot) => (
         <div>
           <div className="font-medium text-gray-900">{getVaccineName(lot.vaccineId)}</div>
-          <div className="text-sm text-gray-500">{getVaccineFamily(lot.vaccineId)}</div>
+          <div className="text-sm text-gray-500">
+            {getVaccineAbbreviation(lot.vaccineId)} • {getVaccineFamily(lot.vaccineId)}
+          </div>
         </div>
       )
     },
@@ -212,10 +221,10 @@ const InventoryTable = () => {
 
   return (
     <div className="space-y-6">
-      <SearchBar
+<SearchBar
         onSearch={setSearchTerm}
         onFilter={setActiveFilter}
-        placeholder="Search vaccines or lot numbers..."
+        placeholder="Search vaccines, abbreviations, or lot numbers..."
         filters={filters}
       />
 

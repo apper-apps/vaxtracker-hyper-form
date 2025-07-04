@@ -2,6 +2,7 @@
   {
     "Id": 1,
     "name": "Gardasil PFS HPV",
+    "abbreviation": "HPV4",
     "family": "HPV",
     "manufacturer": "Merck",
     "dosesPerVial": 1,
@@ -11,6 +12,7 @@
   {
     "Id": 2,
     "name": "Vaxelis PFS DTaP-IPV-Hib-Hep B",
+    "abbreviation": "DTaP-IPV-Hib-HepB",
     "family": "DTaP-IPV-Hib-Hep B",
     "manufacturer": "Merck",
     "dosesPerVial": 1,
@@ -20,6 +22,7 @@
   {
     "Id": 3,
     "name": "IPOL MDV IPV",
+    "abbreviation": "IPV",
     "family": "IPV",
     "manufacturer": "Sanofi Pasteur",
     "dosesPerVial": 10,
@@ -29,6 +32,7 @@
   {
     "Id": 4,
     "name": "Pentacel SDV DTaP-IPV-Hib",
+    "abbreviation": "DTaP-IPV-Hib",
     "family": "DTaP-IPV-Hib",
     "manufacturer": "Sanofi Pasteur",
     "dosesPerVial": 1,
@@ -38,6 +42,7 @@
   {
     "Id": 5,
     "name": "ActHib SDV Hib",
+    "abbreviation": "Hib",
     "family": "Hib",
     "manufacturer": "Sanofi Pasteur",
     "dosesPerVial": 1,
@@ -47,6 +52,7 @@
   {
     "Id": 6,
     "name": "Daptacel SDV DTaP",
+    "abbreviation": "DTaP",
     "family": "DTaP",
     "manufacturer": "Sanofi Pasteur",
     "dosesPerVial": 1,
@@ -56,6 +62,7 @@
   {
     "Id": 7,
     "name": "MMR II SDV MMR",
+    "abbreviation": "MMR",
     "family": "MMR",
     "manufacturer": "Merck",
     "dosesPerVial": 1,
@@ -65,6 +72,7 @@
   {
     "Id": 8,
     "name": "Varivax SDV Varicella",
+    "abbreviation": "VAR",
     "family": "Varicella",
     "manufacturer": "Merck",
     "dosesPerVial": 1,
