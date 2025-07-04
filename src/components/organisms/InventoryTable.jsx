@@ -152,8 +152,8 @@ const columns = [
       label: 'Vaccine',
       render: (value, lot) => (
         <div>
-          <div className="font-medium text-gray-900">{getVaccineFamily(lot.vaccineId)}</div>
-          <div className="text-sm text-gray-500">{getVaccineFamily(lot.vaccineId)}</div>
+          <div className="font-medium text-gray-900">{getVaccineName(lot.vaccineId)}</div>
+          <div className="text-sm text-gray-500">{getVaccineAbbreviation(lot.vaccineId)}</div>
         </div>
       )
     },
