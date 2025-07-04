@@ -391,11 +391,10 @@ const handleDoseChange = (lotId, value) => {
               disabled={!administeredDoses[lot.Id] || errors[lot.Id] || submitting[lot.Id]}
               icon="Syringe"
             >
-              Record
+Record
             </Button>
           </div>
         );
-}
       }
     }
   ], [getVaccineName, getVaccineAbbreviation, administeredDoses, errors, submitting, handleDoseChange, handleAdminister]);
