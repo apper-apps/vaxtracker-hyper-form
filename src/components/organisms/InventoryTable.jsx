@@ -150,6 +150,12 @@ const columns = [
     {
       key: 'vaccine',
       label: 'Vaccine',
+      sortable: true,
+      sortFn: (a, b) => {
+        const aName = getVaccineName(a.vaccineId);
+        const bName = getVaccineName(b.vaccineId);
+        return aName.localeCompare(bName);
+      },
       render: (value, lot) => (
         <div>
           <div className="font-medium text-gray-900">{getVaccineName(lot.vaccineId)}</div>
@@ -174,6 +180,7 @@ const columns = [
     {
       key: 'lotNumber',
       label: 'Lot Number',
+      sortable: true,
       render: (value) => (
         <span className="font-mono text-sm">{value}</span>
       )
@@ -181,6 +188,7 @@ const columns = [
     {
       key: 'expirationDate',
       label: 'Expiration',
+      sortable: true,
       render: (value, lot) => {
         const expInfo = getExpirationInfo(lot);
         return (
@@ -194,6 +202,7 @@ const columns = [
     {
       key: 'quantityOnHand',
       label: 'On Hand',
+      sortable: true,
       render: (value, lot) => (
         <div className="text-center">
           <div className="text-lg font-semibold">{value}</div>
