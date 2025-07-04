@@ -17,7 +17,7 @@ import Inventory from '@/components/pages/Inventory';
 import Reconciliation from '@/components/pages/Reconciliation';
 import Reports from '@/components/pages/Reports';
 import Settings from '@/components/pages/Settings';
-
+import Vaccines from '@/components/pages/Vaccines';
 // Create auth context
 export const AuthContext = createContext(null);
 
@@ -137,7 +137,8 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/receiving" element={<Receiving />} />
                 <Route path="/administration" element={<Administration />} />
-                <Route path="/inventory" element={<Inventory />} />
+<Route path="/inventory" element={<Inventory />} />
+                <Route path="/vaccines" element={<Vaccines />} />
                 <Route path="/reconciliation" element={<Reconciliation />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
