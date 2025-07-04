@@ -153,11 +153,23 @@ const columns = [
       render: (value, lot) => (
         <div>
           <div className="font-medium text-gray-900">{getVaccineName(lot.vaccineId)}</div>
-          <div className="text-sm text-gray-500">
-            {getVaccineAbbreviation(lot.vaccineId)} • {getVaccineFamily(lot.vaccineId)}
-          </div>
+          <div className="text-sm text-gray-500">{getVaccineFamily(lot.vaccineId)}</div>
         </div>
       )
+    },
+    {
+      key: 'abbreviation',
+      label: 'Abbreviation',
+      render: (value, lot) => (
+        <span className="font-medium text-gray-700">{getVaccineAbbreviation(lot.vaccineId)}</span>
+      ),
+      sortable: true,
+      sortKey: 'vaccineId',
+      sortFn: (a, b) => {
+        const aAbbr = getVaccineAbbreviation(a.vaccineId);
+        const bAbbr = getVaccineAbbreviation(b.vaccineId);
+        return aAbbr.localeCompare(bAbbr);
+      }
     },
     {
       key: 'lotNumber',
