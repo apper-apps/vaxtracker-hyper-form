@@ -76,18 +76,66 @@ const filterLots = () => {
   };
 
 const getVaccineName = (vaccineId) => {
-    const vaccine = vaccines.find(v => v.Id === vaccineId);
-    return vaccine ? vaccine.name : 'Unknown';
+    if (!vaccines.length) return 'Loading...';
+    if (vaccineId === null || vaccineId === undefined) return 'No Vaccine ID';
+    
+    // Handle both string and integer vaccine IDs consistently
+    const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
+    
+    // Validate parsing was successful
+    if (isNaN(parsedId)) {
+      console.warn(`Invalid vaccine ID format in inventory: ${vaccineId}`);
+      return 'Invalid Vaccine ID';
+    }
+    
+    const vaccine = vaccines.find(v => v.Id === parsedId);
+    if (!vaccine) {
+      console.warn(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory. Available vaccines:`, vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      return `Vaccine ID ${parsedId} Not Found`;
+    }
+    return vaccine.name || 'Unnamed Vaccine';
   };
 
   const getVaccineAbbreviation = (vaccineId) => {
-    const vaccine = vaccines.find(v => v.Id === vaccineId);
-    return vaccine ? vaccine.abbreviation : 'Unknown';
+    if (!vaccines.length) return 'Loading...';
+    if (vaccineId === null || vaccineId === undefined) return 'N/A';
+    
+    // Handle both string and integer vaccine IDs consistently
+    const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
+    
+    // Validate parsing was successful
+    if (isNaN(parsedId)) {
+      console.warn(`Invalid vaccine ID format for abbreviation in inventory: ${vaccineId}`);
+      return 'N/A';
+    }
+    
+    const vaccine = vaccines.find(v => v.Id === parsedId);
+    if (!vaccine) {
+      console.warn(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory`);
+      return 'N/A';
+    }
+    return vaccine.abbreviation || 'N/A';
   };
 
   const getVaccineFamily = (vaccineId) => {
-    const vaccine = vaccines.find(v => v.Id === vaccineId);
-    return vaccine ? vaccine.family : 'Unknown';
+    if (!vaccines.length) return 'Loading...';
+    if (vaccineId === null || vaccineId === undefined) return 'N/A';
+    
+    // Handle both string and integer vaccine IDs consistently
+    const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
+    
+    // Validate parsing was successful
+    if (isNaN(parsedId)) {
+      console.warn(`Invalid vaccine ID format for family in inventory: ${vaccineId}`);
+      return 'N/A';
+    }
+    
+    const vaccine = vaccines.find(v => v.Id === parsedId);
+    if (!vaccine) {
+      console.warn(`Vaccine family not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory`);
+      return 'N/A';
+    }
+    return vaccine.family || 'N/A';
   };
 
   const getVaccineStatus = (lot) => {

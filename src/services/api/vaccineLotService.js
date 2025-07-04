@@ -66,9 +66,21 @@ class VaccineLotService {
     return true;
   }
 
-  async getByVaccineId(vaccineId) {
+async getByVaccineId(vaccineId) {
     await new Promise(resolve => setTimeout(resolve, 250));
-    return this.vaccineLots.filter(lot => lot.vaccineId === vaccineId);
+    
+    // Handle both string and integer vaccine IDs for data integrity
+    const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
+    
+    if (isNaN(parsedId) || parsedId <= 0) {
+      console.warn(`Invalid vaccine ID provided to getByVaccineId: ${vaccineId}`);
+      return [];
+    }
+    
+    return this.vaccineLots.filter(lot => {
+      const lotVaccineId = typeof lot.vaccineId === 'string' ? parseInt(lot.vaccineId, 10) : lot.vaccineId;
+      return lotVaccineId === parsedId;
+    });
   }
 
   async getAvailableLots() {

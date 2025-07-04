@@ -11,11 +11,21 @@ class VaccineService {
     return [...this.vaccines];
   }
 
-  async getById(id) {
+async getById(id) {
     await new Promise(resolve => setTimeout(resolve, 200));
-    const vaccine = this.vaccines.find(v => v.Id === id);
+    
+    // Handle both string and integer IDs with validation
+    const parsedId = typeof id === 'string' ? parseInt(id, 10) : id;
+    
+    if (isNaN(parsedId) || parsedId <= 0) {
+      console.error(`Invalid vaccine ID provided to getById: ${id} (type: ${typeof id})`);
+      throw new Error(`Invalid vaccine ID: ${id}`);
+    }
+    
+    const vaccine = this.vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      throw new Error('Vaccine not found');
+      console.error(`Vaccine not found for ID: ${id} (parsed: ${parsedId}). Available vaccine IDs:`, this.vaccines.map(v => v.Id));
+      throw new Error(`Vaccine not found for ID: ${parsedId}`);
     }
     return { ...vaccine };
   }

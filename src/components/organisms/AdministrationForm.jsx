@@ -54,18 +54,19 @@ const getVaccineName = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
     if (vaccineId === null || vaccineId === undefined) return 'No Vaccine ID';
     
-    // Handle both string and integer vaccine IDs
+    // Handle both string and integer vaccine IDs with comprehensive validation
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
-    // Check if parsing was successful
-    if (isNaN(parsedId)) {
-      console.warn(`Invalid vaccine ID format: ${vaccineId}`);
+    // Validate parsing was successful and ID is valid
+    if (isNaN(parsedId) || parsedId <= 0) {
+      console.error(`Invalid vaccine ID format in administration: ${vaccineId} (type: ${typeof vaccineId})`);
       return 'Invalid Vaccine ID';
     }
     
     const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      console.warn(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}). Available vaccines:`, vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form. Available vaccines:`, vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.error('Vaccine lots with missing vaccines may need data correction');
       return `Vaccine ID ${parsedId} Not Found`;
     }
     return vaccine.name || 'Unnamed Vaccine';
@@ -75,18 +76,18 @@ const getVaccineAbbreviation = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
     if (vaccineId === null || vaccineId === undefined) return 'N/A';
     
-    // Handle both string and integer vaccine IDs
+    // Handle both string and integer vaccine IDs with comprehensive validation
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
-    // Check if parsing was successful
-    if (isNaN(parsedId)) {
-      console.warn(`Invalid vaccine ID format for abbreviation: ${vaccineId}`);
+    // Validate parsing was successful and ID is valid
+    if (isNaN(parsedId) || parsedId <= 0) {
+      console.error(`Invalid vaccine ID format for abbreviation in administration: ${vaccineId} (type: ${typeof vaccineId})`);
       return 'N/A';
     }
     
     const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      console.warn(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId})`);
+      console.error(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId}) in administration form`);
       return 'N/A';
     }
     return vaccine.abbreviation || 'N/A';
