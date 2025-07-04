@@ -77,62 +77,78 @@ const filterLots = () => {
 
 const getVaccineName = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (vaccineId === null || vaccineId === undefined) return 'No Vaccine ID';
+    if (vaccineId === null || vaccineId === undefined) {
+      console.error('Vaccine ID is null/undefined - this indicates a data integrity issue in lot creation');
+      return 'No Vaccine ID';
+    }
     
     // Handle both string and integer vaccine IDs consistently
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
     // Validate parsing was successful
     if (isNaN(parsedId)) {
-      console.warn(`Invalid vaccine ID format in inventory: ${vaccineId}`);
+      console.error(`Invalid vaccine ID format in inventory: ${vaccineId} (type: ${typeof vaccineId})`);
+      console.error('This suggests the vaccine ID was not properly set during lot creation');
       return 'Invalid Vaccine ID';
     }
     
     const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      console.warn(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory. Available vaccines:`, vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory`);
+      console.error('Available vaccine IDs:', vaccines.map(v => v.Id).sort((a, b) => a - b));
+      console.error('Available vaccines:', vaccines.map(v => ({ Id: v.Id, name: v.name })));
+      console.error('This indicates either:');
+      console.error('1. The vaccine was deleted after the lot was created');
+      console.error('2. The lot was created with an incorrect vaccine ID');
+      console.error('3. There is a data synchronization issue between vaccines and lots');
       return `Vaccine ID ${parsedId} Not Found`;
     }
     return vaccine.name || 'Unnamed Vaccine';
   };
 
-  const getVaccineAbbreviation = (vaccineId) => {
+const getVaccineAbbreviation = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (vaccineId === null || vaccineId === undefined) return 'N/A';
+    if (vaccineId === null || vaccineId === undefined) {
+      console.error('Vaccine ID is null/undefined for abbreviation lookup');
+      return 'N/A';
+    }
     
     // Handle both string and integer vaccine IDs consistently
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
     // Validate parsing was successful
     if (isNaN(parsedId)) {
-      console.warn(`Invalid vaccine ID format for abbreviation in inventory: ${vaccineId}`);
+      console.error(`Invalid vaccine ID format for abbreviation in inventory: ${vaccineId} (type: ${typeof vaccineId})`);
       return 'N/A';
     }
     
     const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      console.warn(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory`);
+      console.error(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory`);
       return 'N/A';
     }
     return vaccine.abbreviation || 'N/A';
   };
 
-  const getVaccineFamily = (vaccineId) => {
+const getVaccineFamily = (vaccineId) => {
     if (!vaccines.length) return 'Loading...';
-    if (vaccineId === null || vaccineId === undefined) return 'N/A';
+    if (vaccineId === null || vaccineId === undefined) {
+      console.error('Vaccine ID is null/undefined for family lookup');
+      return 'N/A';
+    }
     
     // Handle both string and integer vaccine IDs consistently
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
     // Validate parsing was successful
     if (isNaN(parsedId)) {
-      console.warn(`Invalid vaccine ID format for family in inventory: ${vaccineId}`);
+      console.error(`Invalid vaccine ID format for family in inventory: ${vaccineId} (type: ${typeof vaccineId})`);
       return 'N/A';
     }
     
     const vaccine = vaccines.find(v => v.Id === parsedId);
     if (!vaccine) {
-      console.warn(`Vaccine family not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory`);
+      console.error(`Vaccine family not found for ID: ${vaccineId} (parsed: ${parsedId}) in inventory`);
       return 'N/A';
     }
     return vaccine.family || 'N/A';
