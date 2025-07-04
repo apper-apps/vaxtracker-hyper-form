@@ -37,26 +37,12 @@ const loadData = async () => {
       setLoading(true);
       setError(null);
       
-      // Load vaccines first and ensure they're available before processing lots
+      // Load vaccines first
       console.log('Loading vaccines...');
       const vaccinesData = await vaccineService.getAll();
-      
-      // Validate vaccine data completeness
-      const validVaccines = vaccinesData.filter(v => v.Id && v.name && v.abbreviation);
-      if (validVaccines.length < vaccinesData.length) {
-        console.warn(`${vaccinesData.length - validVaccines.length} vaccines have incomplete data`);
-      }
-      
-      console.log(`Loaded ${validVaccines.length} valid vaccines`);
-      setVaccines(validVaccines);
+      console.log(`Loaded ${vaccinesData.length} vaccines`);
+      setVaccines(vaccinesData);
       setVaccinesLoading(false);
-      
-      // Ensure we have vaccines before proceeding
-      if (validVaccines.length === 0) {
-        console.error('No valid vaccines found - cannot filter lots');
-        setError('No vaccine data available. Please check vaccine configuration.');
-        return;
-      }
       
       // Validate and repair data integrity before loading lots
       const integrityResult = await vaccineLotService.validateDataIntegrity();
@@ -65,49 +51,10 @@ const loadData = async () => {
         toast.info(`Data integrity check: ${integrityResult.repaired} lots repaired`);
       }
       
+      // Load available lots (service handles filtering)
       console.log('Loading vaccine lots...');
-      const lotsData = await vaccineLotService.getAvailableLots();
-      console.log(`Loaded ${lotsData.length} total lots from service`);
-      
-      // Filter lots to only include those with valid vaccine references
-      const lotsWithValidVaccines = lotsData.filter(lot => {
-        // Additional safety check for null/undefined vaccine IDs
-        if (lot.vaccineId === null || lot.vaccineId === undefined) {
-          console.warn(`Lot ${lot.Id} has null/undefined vaccine ID, excluding from available lots`);
-          return false;
-        }
-        
-        const vaccine = validVaccines.find(v => v.Id === lot.vaccineId);
-        if (!vaccine) {
-          console.warn(`Lot ${lot.Id} references non-existent vaccine ID: ${lot.vaccineId}`);
-          console.warn(`Available vaccine IDs: ${validVaccines.map(v => v.Id).join(', ')}`);
-          return false;
-        }
-        
-        return true;
-      });
-      
-      console.log(`${lotsWithValidVaccines.length} lots have valid vaccine references`);
-      
-      if (lotsWithValidVaccines.length < lotsData.length) {
-        const excludedCount = lotsData.length - lotsWithValidVaccines.length;
-        console.warn(`${excludedCount} lots have invalid vaccine references and were excluded`);
-        toast.warn(`${excludedCount} lots excluded due to invalid vaccine references`);
-      }
-      
-      // Only show lots with available inventory and valid vaccine references
-      const availableLots = lotsWithValidVaccines.filter(lot => {
-        const hasInventory = lot.quantityOnHand > 0;
-        if (!hasInventory) {
-          console.log(`Lot ${lot.Id} (${lot.lotNumber}) has no available inventory: ${lot.quantityOnHand}`);
-        }
-        return hasInventory;
-      });
-      
-      console.log(`Final available lots for administration: ${availableLots.length}`);
-      availableLots.forEach(lot => {
-        console.log(`- Lot ${lot.Id} (${lot.lotNumber}): ${lot.quantityOnHand} doses available`);
-      });
+      const availableLots = await vaccineLotService.getAvailableLots();
+      console.log(`Loaded ${availableLots.length} available lots`);
       
       setVaccineLots(availableLots);
       
@@ -131,98 +78,58 @@ const loadData = async () => {
     return map;
   }, [vaccines]);
 
-  // Memoized vaccine name lookup function
+// Memoized vaccine name lookup function
   const getVaccineName = useCallback((vaccineId) => {
     // Handle null/undefined vaccine IDs
     if (vaccineId === null || vaccineId === undefined) {
-      console.warn('getVaccineName called with null/undefined vaccine ID - this indicates a data integrity issue');
       return 'Unknown Vaccine (No ID)';
     }
     
-// Enhanced loading state checks with better specificity
-    if (vaccinesLoading) {
-      return 'Loading...';
-    }
-    
-    if (!vaccines || vaccines.length === 0) {
-      return 'Loading vaccines...';
-    }
-    // Handle both string and integer vaccine IDs with comprehensive validation
+    // Handle both string and integer vaccine IDs
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
-    // Validate parsing was successful and ID is valid
     if (isNaN(parsedId) || parsedId <= 0) {
-      console.error(`Invalid vaccine ID format in administration: ${vaccineId} (type: ${typeof vaccineId})`);
       return 'Invalid Vaccine ID';
     }
     
-    // Use direct array search as fallback if vaccineMap fails
-    let vaccine = vaccineMap.get(parsedId);
-    if (!vaccine) {
-      vaccine = vaccines.find(v => v.Id === parsedId);
-    }
+    // Use direct array search for vaccine lookup
+    const vaccine = vaccines.find(v => v.Id === parsedId);
     
     if (!vaccine) {
-      console.error(`Vaccine not found for ID: ${vaccineId} (parsed: ${parsedId})`);
       return `Vaccine ID ${parsedId} Not Found`;
     }
     
     return vaccine.name || 'Unnamed Vaccine';
-  }, [vaccines, vaccineMap, vaccinesLoading, loading]);
+  }, [vaccines]);
 
-  // Memoized vaccine abbreviation lookup function
+// Memoized vaccine abbreviation lookup function
   const getVaccineAbbreviation = useCallback((vaccineId) => {
     // Handle null/undefined vaccine IDs
     if (vaccineId === null || vaccineId === undefined) {
-      console.warn('getVaccineAbbreviation called with null/undefined vaccine ID - this indicates a data integrity issue');
       return 'N/A';
     }
     
-// Enhanced loading state checks with better specificity
-    if (vaccinesLoading) {
-      return 'Loading...';
-    }
-    
-    if (!vaccines || vaccines.length === 0) {
-      return 'Loading...';
-    }
-    // Handle both string and integer vaccine IDs with comprehensive validation
+    // Handle both string and integer vaccine IDs
     const parsedId = typeof vaccineId === 'string' ? parseInt(vaccineId, 10) : vaccineId;
     
-    // Validate parsing was successful and ID is valid
     if (isNaN(parsedId) || parsedId <= 0) {
-      console.error(`Invalid vaccine ID format in administration: ${vaccineId} (type: ${typeof vaccineId})`);
       return 'N/A';
     }
     
-    // Use direct array search as fallback if vaccineMap fails
-    let vaccine = vaccineMap.get(parsedId);
-    if (!vaccine) {
-      vaccine = vaccines.find(v => v.Id === parsedId);
-    }
+    // Use direct array search for vaccine lookup
+    const vaccine = vaccines.find(v => v.Id === parsedId);
     
     if (!vaccine) {
-      console.error(`Vaccine abbreviation not found for ID: ${vaccineId} (parsed: ${parsedId})`);
       return 'N/A';
     }
     
     return vaccine.abbreviation || 'N/A';
-  }, [vaccines, vaccineMap, vaccinesLoading, loading]);
+  }, [vaccines]);
 
 
-  const getExpirationStatus = (lot) => {
-    const today = new Date();
-    const expirationDate = new Date(lot.expirationDate);
-    const daysUntilExpiry = differenceInDays(expirationDate, today);
-    
-    if (daysUntilExpiry < 0) return 'expired';
-    if (daysUntilExpiry <= 30) return 'expiring-soon';
-    if (daysUntilExpiry <= 90) return 'warning';
-    return 'good';
-  };
 
-  const getStatusBadge = (lot) => {
-    const status = getExpirationStatus(lot);
+const getStatusBadge = (lot) => {
+    const status = getExpirationStatus(lot.expirationDate);
     const daysUntilExpiry = differenceInDays(new Date(lot.expirationDate), new Date());
     
     switch (status) {
@@ -431,7 +338,7 @@ Record
     return <Error message={error} onRetry={loadData} />;
   }
 
-if (vaccinesLoading || !vaccines.length) {
+if (vaccinesLoading) {
     return <Loading message="Loading vaccine information..." />;
   }
   if (vaccineLots.length === 0) {
