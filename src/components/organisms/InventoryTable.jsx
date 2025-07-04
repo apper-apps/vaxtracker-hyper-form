@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
-import { differenceInDays } from 'date-fns';
-import DataTable from '@/components/molecules/DataTable';
-import SearchBar from '@/components/molecules/SearchBar';
-import Badge from '@/components/atoms/Badge';
-import Card from '@/components/atoms/Card';
-import Loading from '@/components/ui/Loading';
-import Error from '@/components/ui/Error';
-import Empty from '@/components/ui/Empty';
-import { vaccineLotService } from '@/services/api/vaccineLotService';
-import { vaccineService } from '@/services/api/vaccineService';
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+import { differenceInDays } from "date-fns";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import SearchBar from "@/components/molecules/SearchBar";
+import DataTable from "@/components/molecules/DataTable";
+import { vaccineLotService } from "@/services/api/vaccineLotService";
+import { vaccineService } from "@/services/api/vaccineService";
 
 const InventoryTable = () => {
   const [vaccineLots, setVaccineLots] = useState([]);
@@ -207,16 +207,29 @@ const InventoryTable = () => {
         onRetry={loadData}
         type="data"
       />
-    );
+);
   }
+
+  const handleAdvancedFilter = (filters) => {
+    // Handle advanced filtering logic
+    console.log('Advanced filters:', filters);
+  };
+
+  const handleSort = (sortConfig) => {
+    // Handle sorting logic
+    console.log('Sort config:', sortConfig);
+  };
 
   return (
     <div className="space-y-6">
       <SearchBar
         onSearch={setSearchTerm}
         onFilter={setActiveFilter}
+        onAdvancedFilter={handleAdvancedFilter}
+        onSort={handleSort}
         placeholder="Search vaccines or lot numbers..."
         filters={filters}
+        vaccines={vaccines}
       />
 
       <Card>
