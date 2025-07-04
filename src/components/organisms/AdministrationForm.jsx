@@ -42,8 +42,15 @@ const loadData = async () => {
       setVaccines(vaccinesData);
       setVaccinesLoading(false);
       
-      // Then load vaccine lots
+      // Then load vaccine lots with data integrity validation
       const lotsData = await vaccineLotService.getAll();
+      
+      // Check if any data integrity repairs were made
+      const integrityResult = await vaccineLotService.validateDataIntegrity();
+      if (integrityResult.repaired > 0) {
+        toast.success(`Data integrity verified: ${integrityResult.repaired} vaccine lot(s) corrected for administration`);
+        console.log('Administration form - vaccine lot data integrity repairs:', integrityResult);
+      }
       
       // Only show lots with available inventory
       const availableLots = lotsData.filter(lot => lot.quantityOnHand > 0);
@@ -51,7 +58,7 @@ const loadData = async () => {
       setError(null);
     } catch (error) {
       console.error('Error loading data:', error);
-      setError('Failed to load inventory data');
+      setError('Failed to load inventory data. Please check data integrity.');
       setVaccinesLoading(false);
     } finally {
       setLoading(false);

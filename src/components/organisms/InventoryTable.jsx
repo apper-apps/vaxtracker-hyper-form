@@ -25,7 +25,7 @@ const InventoryTable = () => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -34,6 +34,13 @@ const InventoryTable = () => {
         vaccineLotService.getAll(),
         vaccineService.getAll()
       ]);
+      
+      // Check if any data integrity repairs were made
+      const integrityResult = await vaccineLotService.validateDataIntegrity();
+      if (integrityResult.repaired > 0) {
+        toast.success(`Data integrity check completed: ${integrityResult.repaired} vaccine lot(s) repaired`);
+        console.log('Vaccine lot data integrity repairs:', integrityResult);
+      }
       
       setVaccineLots(lotsData);
       setVaccines(vaccinesData);
